@@ -912,20 +912,7 @@
 <body>
 
   <div id="loginSection" class="card" style="text-align:center;margin:20px;">
-    <h2>PureCloud Authentication</h2>
-    <p>Please enter your OAuth Client Credentials to authenticate with EUW2 region</p>
-    
-    <div style="max-width: 400px; margin: 20px auto; text-align: left;">
-      <label for="clientId">Client ID:</label>
-      <input type="text" id="clientId" placeholder="Enter your Client ID" style="width: 100%; margin-bottom: 15px;">
-      
-      <label for="clientSecret">Client Secret:</label>
-      <input type="password" id="clientSecret" placeholder="Enter your Client Secret" style="width: 100%; margin-bottom: 20px;">
-      
-      <button id="authenticateBtn" style="width: 100%; padding: 12px;">Authenticate</button>
-    </div>
-    
-    <div id="authStatus" style="margin-top: 15px; font-size: 14px; color: var(--text-light);"></div>
+    <div class="loading">Authenticating with PureCloud (EUW2)...</div>
   </div>
 
   <div id="loadingOverlay" class="loading-overlay">
@@ -1229,6 +1216,13 @@
   </div>
 
   <script>
+    // =============================================
+    // ENTER YOUR CLIENT ID AND SECRET HERE
+    // =============================================
+    const CLIENT_ID = 'cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad';      // Replace with your Client ID
+    const CLIENT_SECRET = 'hgScXAac1VGGAcg27IvkpHmzd9dVwR1mTnCckBhEETY';  // Replace with your Client Secret
+    // =============================================
+    
     // EUW2 Region Configuration
     const EUW2_API_BASE = 'https://api.euw2.pure.cloud';
     const EUW2_LOGIN_BASE = 'https://login.euw2.pure.cloud';
@@ -1285,6 +1279,25 @@
     const REQUEST_DELAY = 200;
     let isFetching = false;
 
+    // Check if credentials are set
+    function checkCredentials() {
+      if (CLIENT_ID === 'YOUR_CLIENT_ID_HERE' || CLIENT_SECRET === 'YOUR_CLIENT_SECRET_HERE') {
+        document.getElementById('loginSection').innerHTML = `
+          <div style="color: var(--danger); padding: 20px;">
+            <h2>Configuration Required</h2>
+            <p>Please set your Client ID and Client Secret in the script section of this HTML file.</p>
+            <p>Look for the lines:</p>
+            <pre style="background: #f5f5f5; padding: 10px; text-align: left; margin: 20px;">
+const CLIENT_ID = 'YOUR_CLIENT_ID_HERE';
+const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
+            </pre>
+          </div>
+        `;
+        return false;
+      }
+      return true;
+    }
+
     // Status color mapping function
     function getStatusClass(presence) {
       if (!presence) return 'status-offline';
@@ -1307,7 +1320,12 @@
       return 'status-offline';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check if credentials are configured
+      if (!checkCredentials()) {
+        return;
+      }
+      
       // Check if we have a stored token
       const storedToken = localStorage.getItem('euw2_token');
       const storedExpiry = localStorage.getItem('euw2_token_expiry');
@@ -1318,23 +1336,14 @@
         document.getElementById("loginSection").style.display = "none";
         document.getElementById("appContent").style.display = "block";
         initializeApp();
+      } else {
+        // Auto-authenticate with hardcoded credentials
+        await authenticate();
       }
-      
-      // Setup authentication button
-      document.getElementById('authenticateBtn').addEventListener('click', authenticate);
     });
 
     async function authenticate() {
-      const clientId = document.getElementById('clientId').value.trim();
-      const clientSecret = document.getElementById('clientSecret').value.trim();
-      
-      if (!clientId || !clientSecret) {
-        showAuthStatus('Please enter both Client ID and Secret', 'error');
-        return;
-      }
-      
-      showAuthStatus('Authenticating...', 'info');
-      document.getElementById('authenticateBtn').disabled = true;
+      showAuthStatus('Authenticating with EUW2...', 'info');
       
       try {
         // Get token using client credentials
@@ -1342,7 +1351,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ' + btoa(clientId + ':' + clientSecret)
+            'Authorization': 'Basic ' + btoa(CLIENT_ID + ':' + CLIENT_SECRET)
           },
           body: 'grant_type=client_credentials'
         });
@@ -1366,22 +1375,24 @@
           document.getElementById("loginSection").style.display = "none";
           document.getElementById("appContent").style.display = "block";
           initializeApp();
-        }, 1000);
+        }, 500);
         
       } catch (error) {
         console.error('Authentication error:', error);
-        showAuthStatus(`Authentication failed: ${error.message}`, 'error');
-      } finally {
-        document.getElementById('authenticateBtn').disabled = false;
+        document.getElementById('loginSection').innerHTML = `
+          <div style="color: var(--danger); padding: 20px;">
+            <h2>Authentication Failed</h2>
+            <p>${error.message}</p>
+            <p>Please check your Client ID and Client Secret in the script section.</p>
+            <button onclick="location.reload()" style="margin-top: 20px;">Retry</button>
+          </div>
+        `;
       }
     }
 
     function showAuthStatus(message, type) {
-      const statusEl = document.getElementById('authStatus');
-      statusEl.textContent = message;
-      statusEl.style.color = type === 'error' ? 'var(--danger)' : 
-                            type === 'success' ? 'var(--primary-color)' : 
-                            'var(--text-light)';
+      const loginSection = document.getElementById('loginSection');
+      loginSection.innerHTML = `<div class="${type === 'error' ? 'error-message' : type === 'success' ? 'success-message' : 'info-message'}">${message}</div>`;
     }
 
     function showMessage(message, type = 'error') {
@@ -1428,9 +1439,8 @@
     async function rateLimitedFetch(url, options = {}) {
       // Check token expiry
       if (tokenExpiry && Date.now() > tokenExpiry - 60000) {
-        showMessage('Token expired. Please log in again.', 'error');
-        logout();
-        throw new Error('Token expired');
+        showMessage('Token expired. Re-authenticating...', 'info');
+        await authenticate();
       }
       
       if (rateLimitRemaining < 5) {
@@ -1461,9 +1471,9 @@
             return rateLimitedFetch(url, options);
           }
           if (response.status === 401) {
-            showMessage('Authentication expired. Please log in again.', 'error');
-            logout();
-            throw new Error('Unauthorized');
+            showMessage('Authentication expired. Re-authenticating...', 'info');
+            await authenticate();
+            return rateLimitedFetch(url, options);
           }
           throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
@@ -1482,8 +1492,8 @@
       localStorage.removeItem('euw2_token_expiry');
       document.getElementById("loginSection").style.display = "block";
       document.getElementById("appContent").style.display = "none";
-      document.getElementById('clientId').value = '';
-      document.getElementById('clientSecret').value = '';
+      document.getElementById('loginSection').innerHTML = '<div class="loading">Authenticating with PureCloud (EUW2)...</div>';
+      authenticate();
     }
 
     function initializeColumnManager() {
