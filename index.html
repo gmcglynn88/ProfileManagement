@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -9,7 +9,7 @@
       --primary-color:#63AB8F; --secondary-color:#4A8C7D; --border-color:#DEE2E6;
       --light-bg:#F8F9FA; --card-bg:#FFFFFF; --text-color:#2C3E50; --text-light:#6C757D;
       --pill:#e9f6f0; --filter-bg:#f0f7f3; --warning:#ffc107; --danger:#dc3545;
-      
+
       /* New status colors */
       --status-onqueue: #b3e0ff; /* Pastel Blue */
       --status-offqueue: #d2b48c; /* Brown/Tan */
@@ -22,7 +22,7 @@
       --status-meal: #ffcc99; /* Orange */
       --status-away: #ffc107; /* Orange */
       --status-training: #c3e6cb; /* Green */
-      
+
       /* Text colors for statuses */
       --status-onqueue-text: #0066cc;
       --status-offqueue-text: #8b4513;
@@ -548,23 +548,23 @@
         margin: 10px;
         padding: 10px;
       }
-      
+
       .controls {
         grid-template-columns: 1fr;
       }
-      
+
       .stats-bar {
         gap: 10px;
       }
-      
+
       .action-buttons {
         flex-direction: column;
       }
-      
+
       .tabs {
         flex-direction: column;
       }
-      
+
       .tab {
         padding: 10px 16px;
         text-align: left;
@@ -579,12 +579,12 @@
       color:#3c763d;padding:10px;margin:10px 0;
       border:1px solid #3c763d;border-radius:4px;background:#dff0d8;
     }
-    
+
     .info-message{
       color:#0c5460;padding:10px;margin:10px 0;
       border:1px solid #bee5eb;border-radius:4px;background:#d1ecf1;
     }
-    
+
     .loading-overlay {
       position: fixed;
       top: 0;
@@ -598,7 +598,7 @@
       z-index: 1000;
       display: none;
     }
-    
+
     .loading-spinner {
       width: 50px;
       height: 50px;
@@ -607,7 +607,7 @@
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -924,7 +924,7 @@
       <h1 style="margin: 0;">User Management Dashboard (EUW2)</h1>
       <button id="logoutBtn" style="background: var(--danger); width: auto;">Logout</button>
     </div>
-    
+
     <div id="messageContainer" style="display:none;"></div>
 
     <div class="tabs">
@@ -937,7 +937,7 @@
     <div id="active-users" class="tab-content active">
       <div class="filter-section card">
         <h3>Filter Users</h3>
-        
+
         <div class="controls">
           <div>
             <label>Select Management Units</label>
@@ -974,7 +974,7 @@
             <button id="fetchUsers" class="full-width-btn">Load Users</button>
           </div>
         </div>
-        
+
         <div id="rateLimitInfo" class="rate-limit-info">
           Rate limit: <span id="rateLimitRemaining">100</span> remaining, resets in <span id="rateLimitReset">60</span>s
         </div>
@@ -1057,7 +1057,7 @@
     <div id="inactive-users" class="tab-content">
       <div class="filter-section card">
         <h3>Find Inactive Users</h3>
-        
+
         <div class="inactive-controls">
           <div>
             <label>Days Since Last Login (minimum)</label>
@@ -1129,7 +1129,7 @@
     <div id="roles-management" class="tab-content">
       <div class="filter-section card">
         <h3>Roles Summary</h3>
-        
+
         <div class="roles-controls">
           <div>
             <label>Search Roles</label>
@@ -1187,12 +1187,12 @@
         <h2>Manage Table Columns</h2>
         <button class="close-column-manager" id="closeColumnManager">×</button>
       </div>
-      
+
       <div class="column-manager-body">
         <div class="column-manager-search">
           <input type="text" id="columnSearch" placeholder="Search columns..." />
         </div>
-        
+
         <div class="column-manager-actions">
           <button id="selectAllColumns">Select All</button>
           <button id="deselectAllColumns">Deselect All</button>
@@ -1202,12 +1202,12 @@
             <span id="selectedColumnsCount">0</span> columns selected
           </span>
         </div>
-        
+
         <div id="columnsListContainer" class="columns-list-container">
           <!-- Columns will be populated here by JavaScript -->
         </div>
       </div>
-      
+
       <div class="column-manager-footer">
         <button id="cancelColumns" class="cancel-columns-btn">Cancel</button>
         <button id="saveColumns" class="save-columns-btn">Save Changes</button>
@@ -1217,16 +1217,17 @@
 
   <script>
     // =============================================
-    // ENTER YOUR CLIENT ID AND SECRET HERE
+    // STAGING ONLY: Hardcoded credentials
+    // ⚠️ Do NOT ship/commit these to a public repo.
     // =============================================
-    const CLIENT_ID = 'cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad';      // Replace with your Client ID
-    const CLIENT_SECRET = 'hgScXAac1VGGAcg27IvkpHmzd9dVwR1mTnCckBhEETY';  // Replace with your Client Secret
+    const CLIENT_ID = "cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad";
+    const CLIENT_SECRET = "hgScXAac1VGGAcg27IvkpHmzd9dVwR1mTnCckBhEETY";
     // =============================================
-    
+
     // EUW2 Region Configuration
     const EUW2_API_BASE = 'https://api.euw2.pure.cloud';
     const EUW2_LOGIN_BASE = 'https://login.euw2.pure.cloud';
-    
+
     let token = null;
     let tokenExpiry = null;
     let availableUsers = [];
@@ -1234,10 +1235,10 @@
     let availableManagementUnits = [];
     let userQueuesCache = new Map();
     let rolesData = {};
-    
+
     let rateLimitRemaining = 100;
     let rateLimitResetTime = Date.now() + 60000;
-    
+
     let currentPage = 1;
     let pageSize = 50;
     let sortColumn = 'name';
@@ -1245,14 +1246,14 @@
     let filters = {};
     let globalSearch = '';
     let filteredUsers = [];
-    
+
     let inactiveUsers = [];
-    
+
     // Column management variables
     let visibleColumns = [];
     let allColumns = [];
     let columnCategories = {};
-    
+
     // Default columns to show
     const DEFAULT_VISIBLE_COLUMNS = [
       'name',
@@ -1274,7 +1275,7 @@
     let columnIndex = 0;
     let tableElement = null;
     let originalWidths = {};
-    
+
     const MAX_PAGE_SIZE = 100;
     const REQUEST_DELAY = 200;
     let isFetching = false;
@@ -1301,9 +1302,9 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     // Status color mapping function
     function getStatusClass(presence) {
       if (!presence) return 'status-offline';
-      
+
       const status = String(presence).toLowerCase().trim();
-      
+
       if (status.includes('on queue') || status === 'on_queue') return 'status-onqueue';
       if (status.includes('off queue') || status === 'off_queue') return 'status-offqueue';
       if (status.includes('available')) return 'status-available';
@@ -1316,7 +1317,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       if (status.includes('away')) return 'status-away';
       if (status.includes('train')) return 'status-training';
       if (status.includes('idle')) return 'status-idle';
-      
+
       return 'status-offline';
     }
 
@@ -1325,11 +1326,11 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       if (!checkCredentials()) {
         return;
       }
-      
+
       // Check if we have a stored token
       const storedToken = localStorage.getItem('euw2_token');
       const storedExpiry = localStorage.getItem('euw2_token_expiry');
-      
+
       if (storedToken && storedExpiry && Date.now() < parseInt(storedExpiry)) {
         token = storedToken;
         tokenExpiry = parseInt(storedExpiry);
@@ -1344,7 +1345,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     async function authenticate() {
       showAuthStatus('Authenticating with EUW2...', 'info');
-      
+
       try {
         // Get token using client credentials
         const tokenResponse = await fetch(`${EUW2_LOGIN_BASE}/oauth/token`, {
@@ -1355,28 +1356,28 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           },
           body: 'grant_type=client_credentials'
         });
-        
+
         if (!tokenResponse.ok) {
           const errorData = await tokenResponse.text();
           throw new Error(`Authentication failed: ${tokenResponse.status} - ${errorData}`);
         }
-        
+
         const tokenData = await tokenResponse.json();
         token = tokenData.access_token;
         tokenExpiry = Date.now() + (tokenData.expires_in * 1000);
-        
+
         // Store token
         localStorage.setItem('euw2_token', token);
         localStorage.setItem('euw2_token_expiry', tokenExpiry.toString());
-        
+
         showAuthStatus('Authentication successful!', 'success');
-        
+
         setTimeout(() => {
           document.getElementById("loginSection").style.display = "none";
           document.getElementById("appContent").style.display = "block";
           initializeApp();
         }, 500);
-        
+
       } catch (error) {
         console.error('Authentication error:', error);
         document.getElementById('loginSection').innerHTML = `
@@ -1403,9 +1404,9 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     }
 
     function authHeaders() {
-      return { 
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json" 
+      return {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
       };
     }
 
@@ -1413,17 +1414,17 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       if (headers) {
         const remaining = headers.get('RateLimit-Remaining');
         const reset = headers.get('RateLimit-Reset');
-        
+
         if (remaining !== null) {
           rateLimitRemaining = parseInt(remaining);
           document.getElementById('rateLimitRemaining').textContent = remaining;
         }
-        
+
         if (reset !== null) {
           const resetSeconds = parseInt(reset);
           rateLimitResetTime = Date.now() + (resetSeconds * 1000);
           document.getElementById('rateLimitReset').textContent = resetSeconds;
-          
+
           if (rateLimitRemaining < 20) {
             document.getElementById('rateLimitInfo').style.display = 'block';
             document.getElementById('rateLimitInfo').style.background = 'var(--warning)';
@@ -1442,7 +1443,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('Token expired. Re-authenticating...', 'info');
         await authenticate();
       }
-      
+
       if (rateLimitRemaining < 5) {
         const waitTime = rateLimitResetTime - Date.now();
         if (waitTime > 0) {
@@ -1450,19 +1451,19 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
-      
+
       if (isFetching) {
         await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
       }
-      
+
       try {
         const response = await fetch(url, {
           ...options,
           headers: { ...authHeaders(), ...options.headers }
         });
-        
+
         updateRateLimitInfo(response.headers);
-        
+
         if (!response.ok) {
           if (response.status === 429) {
             const retryAfter = response.headers.get('Retry-After') || 60;
@@ -1477,7 +1478,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           }
           throw new Error(`API error: ${response.status} ${response.statusText}`);
         }
-        
+
         return response;
       } catch (error) {
         console.error('Fetch error:', error);
@@ -1504,32 +1505,32 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         { id: 'id', label: 'User ID', category: 'Basic Info', type: 'string', default: false },
         { id: 'division.id', label: 'Division ID', category: 'Basic Info', type: 'string', default: false },
         { id: 'division.name', label: 'Division Name', category: 'Basic Info', type: 'string', default: false },
-        
+
         // Status & Presence Category
         { id: 'routingStatus.status', label: 'Routing Status', category: 'Status & Presence', type: 'string', default: true },
         { id: 'presence.presenceDefinition.systemPresence', label: 'System Presence', category: 'Status & Presence', type: 'string', default: true },
         { id: 'integrationPresence.presenceDefinition.systemPresence', label: 'Integration Presence', category: 'Status & Presence', type: 'string', default: false },
         { id: 'conversationSummary.active', label: 'Active Conversations', category: 'Status & Presence', type: 'number', default: false },
         { id: 'outOfOffice.name', label: 'Out of Office', category: 'Status & Presence', type: 'string', default: false },
-        
+
         // Team & Organization Category
         { id: 'team.name', label: 'Team', category: 'Team & Organization', type: 'string', default: true },
         { id: 'team.id', label: 'Team ID', category: 'Team & Organization', type: 'string', default: false },
         { id: 'groups', label: 'Groups', category: 'Team & Organization', type: 'array', default: false },
         { id: 'workPlanBidRanks', label: 'Work Plan Bid Ranks', category: 'Team & Organization', type: 'array', default: false },
-        
+
         // Role & Authorization Category
         { id: 'roles', label: 'Roles', category: 'Role & Authorization', type: 'array', default: true },
         { id: 'authorization.unusedRoles', label: 'Unused Roles', category: 'Role & Authorization', type: 'array', default: false },
         { id: 'authorization.permissions', label: 'Permissions', category: 'Role & Authorization', type: 'array', default: false },
         { id: 'lasttokenissued', label: 'Last Token Issued', category: 'Role & Authorization', type: 'date', default: false },
-        
+
         // Location & Station Category
         { id: 'geolocation.city', label: 'City', category: 'Location & Station', type: 'string', default: false },
         { id: 'geolocation.country', label: 'Country', category: 'Location & Station', type: 'string', default: false },
         { id: 'station.name', label: 'Station Name', category: 'Location & Station', type: 'string', default: false },
         { id: 'station.type', label: 'Station Type', category: 'Location & Station', type: 'string', default: false },
-        
+
         // Skills & Attributes Category
         { id: 'skills', label: 'Skills', category: 'Skills & Attributes', type: 'array', default: true },
         { id: 'profileSkills', label: 'Profile Skills', category: 'Skills & Attributes', type: 'array', default: false },
@@ -1537,26 +1538,26 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         { id: 'languages', label: 'Languages', category: 'Skills & Attributes', type: 'array', default: false },
         { id: 'languagePreference', label: 'Language Preference', category: 'Skills & Attributes', type: 'string', default: false },
         { id: 'customAttributes', label: 'Custom Attributes', category: 'Skills & Attributes', type: 'object', default: false },
-        
+
         // Contact Settings Category
         { id: 'externalContactsSettings', label: 'External Contact Settings', category: 'Contact Settings', type: 'object', default: false },
-        
+
         // Employment Info Category
         { id: 'employerInfo.officialName', label: 'Official Name', category: 'Employment Info', type: 'string', default: false },
         { id: 'employerInfo.employeeId', label: 'Employee ID', category: 'Employment Info', type: 'string', default: false },
         { id: 'employerInfo.employeeType', label: 'Employee Type', category: 'Employment Info', type: 'string', default: false },
         { id: 'employerInfo.dateHire', label: 'Hire Date', category: 'Employment Info', type: 'date', default: false },
-        
+
         // Biography & Dates Category
         { id: 'biography.biography', label: 'Biography', category: 'Biography & Dates', type: 'string', default: false },
         { id: 'dateLastLogin', label: 'Last Login Date', category: 'Biography & Dates', type: 'date', default: true },
         { id: 'dateWelcomeSent', label: 'Welcome Sent Date', category: 'Biography & Dates', type: 'date', default: false },
         { id: 'daysSinceLastLogin', label: 'Days Since Login', category: 'Biography & Dates', type: 'number', default: true },
-        
+
         // Queues Category
         { id: 'queues', label: 'Queues', category: 'Queues', type: 'array', default: true }
       ];
-      
+
       // Load saved column preferences from localStorage
       const savedColumns = localStorage.getItem('visibleColumns');
       if (savedColumns) {
@@ -1564,7 +1565,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       } else {
         visibleColumns = [...DEFAULT_VISIBLE_COLUMNS];
       }
-      
+
       // Group columns by category
       columnCategories = {};
       allColumns.forEach(column => {
@@ -1578,10 +1579,10 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     async function initializeApp() {
       try {
         showLoading(true);
-        
+
         // Initialize column manager first
         initializeColumnManager();
-        
+
         await Promise.all([
           fetchAllTeams(),
           fetchAllManagementUnits()
@@ -1591,10 +1592,10 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         populateDropdownOptions();
         setupEventListeners();
         setupTabs();
-        
+
         // Render table headers with saved preferences
         renderTableHeaders();
-        
+
         showLoading(false);
 
       } catch (e) {
@@ -1606,7 +1607,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     async function fetchAllTeams() {
       let all = [], page = 1;
       const size = 100;
-      
+
       try {
         do {
           const res = await rateLimitedFetch(
@@ -1615,28 +1616,28 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           const data = await res.json();
           all = all.concat(data.entities || []);
           page++;
-          
+
           if (!data.entities || data.entities.length < size) break;
-          
+
         } while (true);
-        
+
         availableTeams = all;
-        
+
         const inactiveTeamFilter = document.getElementById('inactiveTeamFilter');
         const roleTeamFilter = document.getElementById('roleTeamFilter');
-        
+
         availableTeams.forEach(team => {
           const option1 = document.createElement('option');
           option1.value = team.id;
           option1.textContent = team.name;
           inactiveTeamFilter.appendChild(option1);
-          
+
           const option2 = document.createElement('option');
           option2.value = team.id;
           option2.textContent = team.name;
           roleTeamFilter.appendChild(option2);
         });
-        
+
       } catch (error) {
         console.error('Error fetching teams:', error);
         showMessage('Error loading teams');
@@ -1646,7 +1647,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     async function fetchAllManagementUnits() {
       let all = [], page = 1;
       const size = 100;
-      
+
       try {
         do {
           const res = await rateLimitedFetch(
@@ -1655,11 +1656,11 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           const data = await res.json();
           all = all.concat(data.entities || []);
           page++;
-          
+
           if (!data.entities || data.entities.length < size) break;
-          
+
         } while (true);
-        
+
         availableManagementUnits = all;
       } catch (error) {
         console.error('Error fetching management units:', error);
@@ -1671,7 +1672,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       if (userQueuesCache.has(userId)) {
         return userQueuesCache.get(userId);
       }
-      
+
       try {
         const response = await rateLimitedFetch(
           `${EUW2_API_BASE}/api/v2/users/${userId}/queues?pageSize=50`
@@ -1692,15 +1693,15 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('Already fetching data, please wait...', 'info');
         return;
       }
-      
+
       try {
         isFetching = true;
         document.getElementById('fetchUsers').disabled = true;
         document.getElementById('fetchUsers').textContent = 'Loading...';
-        
+
         const progressContainer = document.getElementById('progressContainer');
         progressContainer.style.display = 'block';
-        
+
         const expandFields = [
           'routingStatus',
           'presence',
@@ -1714,7 +1715,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         let page = 1;
         let totalUsers = 0;
         let loadedCount = 0;
-        
+
         try {
           const countRes = await rateLimitedFetch(
             `${EUW2_API_BASE}/api/v2/users?pageSize=1&pageNumber=1`
@@ -1730,22 +1731,22 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         while (true) {
           try {
             document.getElementById('progressStatus').textContent = `Loading page ${page}...`;
-            
+
             const res = await rateLimitedFetch(
               `${EUW2_API_BASE}/api/v2/users?expand=${expandFields}&pageNumber=${page}&pageSize=${MAX_PAGE_SIZE}`
             );
-            
+
             const data = await res.json();
             const users = data.entities || [];
-            
+
             console.log(`Page ${page}: Loaded ${users.length} users`);
-            
-            const validUsers = users.filter(u => 
+
+            const validUsers = users.filter(u =>
               u.name && u.name.trim() && u.name !== 'Unknown User'
             );
-            
+
             console.log(`Page ${page}: ${validUsers.length} valid users`);
-            
+
             validUsers.forEach(user => {
               if (user.dateLastLogin) {
                 const lastLogin = new Date(user.dateLastLogin);
@@ -1755,13 +1756,13 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               } else {
                 user.daysSinceLastLogin = 999;
               }
-              
+
               if (user.authorization && user.authorization.roles) {
                 user.roles = user.authorization.roles.map(r => r.name);
               } else {
                 user.roles = [];
               }
-              
+
               // Log a sample user for debugging
               if (page === 1 && validUsers.indexOf(user) === 0) {
                 console.log('Sample user data:', {
@@ -1776,55 +1777,55 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
                 });
               }
             });
-            
+
             allUsers = allUsers.concat(validUsers);
             loadedCount += users.length;
-            
+
             const progressPercent = Math.min(Math.round((loadedCount / totalUsers) * 100), 100);
             document.getElementById('progressFill').style.width = `${progressPercent}%`;
             document.getElementById('progressPercent').textContent = `${progressPercent}%`;
             document.getElementById('progressCount').textContent = loadedCount;
-            
+
             if (!data.pageCount || page >= data.pageCount || users.length < MAX_PAGE_SIZE) {
               break;
             }
-            
+
             page++;
-            
+
             await new Promise(resolve => setTimeout(resolve, REQUEST_DELAY));
-            
+
           } catch (error) {
             console.error(`Error fetching page ${page}:`, error);
-            
+
             if (error.message.includes('429')) {
               await new Promise(resolve => setTimeout(resolve, 5000));
               continue;
             }
-            
+
             showMessage(`Stopped loading at page ${page}. ${error.message}`, 'warning');
             break;
           }
         }
-        
+
         availableUsers = allUsers;
-        
+
         console.log(`Total loaded: ${availableUsers.length} users`);
-        
+
         progressContainer.style.display = 'none';
-        
+
         setupColumnResizing();
-        
+
         applyFilters();
         renderTable();
-        
+
         updateRolesData();
-        
+
         showMessage(`Successfully loaded ${availableUsers.length} users`, 'success');
-        
+
       } catch (error) {
         console.error('Error fetching users:', error);
         showMessage(`Error loading users: ${error.message}`);
-        
+
         document.getElementById('progressContainer').style.display = 'none';
       } finally {
         isFetching = false;
@@ -1835,7 +1836,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     function updateRolesData() {
       rolesData = {};
-      
+
       availableUsers.forEach(user => {
         if (user.roles && user.roles.length > 0) {
           user.roles.forEach(role => {
@@ -1852,14 +1853,14 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           });
         }
       });
-      
-      const sortedRoles = Object.keys(rolesData).sort((a, b) => 
+
+      const sortedRoles = Object.keys(rolesData).sort((a, b) =>
         rolesData[b].users.length - rolesData[a].users.length
       );
-      
+
       document.getElementById('totalRoles').textContent = sortedRoles.length;
       document.getElementById('totalUsersWithRoles').textContent = availableUsers.filter(u => u.roles && u.roles.length > 0).length;
-      
+
       const usersPerRole = sortedRoles.map(role => rolesData[role].users.length);
       if (usersPerRole.length > 0) {
         const avg = Math.round(usersPerRole.reduce((a, b) => a + b, 0) / usersPerRole.length);
@@ -1867,7 +1868,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         document.getElementById('avgUsersPerRole').textContent = avg;
         document.getElementById('maxUsersPerRole').textContent = max;
       }
-      
+
       renderRoles();
     }
 
@@ -1875,40 +1876,40 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       const container = document.getElementById('rolesContainer');
       const roleSearch = document.getElementById('roleSearch').value.toLowerCase();
       const teamFilter = document.getElementById('roleTeamFilter').value;
-      
-      const sortedRoles = Object.keys(rolesData).sort((a, b) => 
+
+      const sortedRoles = Object.keys(rolesData).sort((a, b) =>
         rolesData[b].users.length - rolesData[a].users.length
       );
-      
+
       const filteredRoles = sortedRoles.filter(role => {
         if (roleSearch && !role.toLowerCase().includes(roleSearch)) {
           return false;
         }
-        
+
         if (teamFilter) {
-          const hasTeam = rolesData[role].users.some(user => 
+          const hasTeam = rolesData[role].users.some(user =>
             user.team && user.team.id === teamFilter
           );
           if (!hasTeam) return false;
         }
-        
+
         return true;
       });
-      
+
       if (filteredRoles.length === 0) {
         container.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-light)}">
           No roles found. Try adjusting your filters or load users first.
         </div>`;
         return;
       }
-      
+
       container.innerHTML = filteredRoles.map(role => {
         const roleInfo = rolesData[role];
         const userCount = roleInfo.users.length;
         const teamCount = roleInfo.teams.size;
         const sampleUsers = roleInfo.users.slice(0, 5);
         const teams = Array.from(roleInfo.teams).slice(0, 3);
-        
+
         return `
           <div class="role-card">
             <div class="role-header">
@@ -1933,27 +1934,27 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     function viewRoleUsers(roleName) {
       if (!rolesData[roleName]) return;
-      
+
       const roleInfo = rolesData[roleName];
       const users = roleInfo.users;
-      
+
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-      
+
       document.querySelector('.tab[data-tab="active-users"]').classList.add('active');
       document.getElementById('active-users').classList.add('active');
-      
+
       clearFilters();
-      
+
       const rolesFilter = document.querySelector('.column-filter[data-column="roles"]');
       if (rolesFilter) {
         rolesFilter.value = roleName;
         filters['roles'] = roleName;
       }
-      
+
       applyFilters();
       renderTable();
-      
+
       showMessage(`Showing ${users.length} users with role: ${roleName}`, 'success');
     }
 
@@ -1962,20 +1963,20 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('Role not found', 'error');
         return;
       }
-      
+
       const roleInfo = rolesData[roleName];
       const users = roleInfo.users;
-      
+
       if (users.length === 0) {
         showMessage('No users with this role', 'info');
         return;
       }
-      
+
       const headers = [
         'Name', 'Email', 'Role', 'Status', 'Team', 'Presence',
         'Last Login', 'Days Since Login', 'Skills', 'User ID'
       ];
-      
+
       const data = users.map(user => [
         user.name || '',
         user.email || '',
@@ -1988,12 +1989,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         user.skills?.map(s => s.name).join('; ') || '',
         user.id || ''
       ]);
-      
+
       const csvContent = [
         headers.join(','),
         ...data.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -2003,13 +2004,13 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showMessage(`Exported ${users.length} users with role "${roleName}" to CSV`, 'success');
     }
 
     function applyFilters() {
       filteredUsers = [...availableUsers];
-      
+
       if (globalSearch) {
         const search = globalSearch.toLowerCase();
         filteredUsers = filteredUsers.filter(user => {
@@ -2017,44 +2018,44 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
             (user.name && user.name.toLowerCase().includes(search)) ||
             (user.email && user.email.toLowerCase().includes(search)) ||
             (user.roles && user.roles.some(role => role.toLowerCase().includes(search))) ||
-            (user.skills && user.skills.some(skill => 
+            (user.skills && user.skills.some(skill =>
               skill.name && skill.name.toLowerCase().includes(search)
             )) ||
             (user.team && user.team.name && user.team.name.toLowerCase().includes(search))
           );
         });
       }
-      
+
       Object.keys(filters).forEach(column => {
         const filterValue = filters[column].toLowerCase().trim();
         if (!filterValue) return;
-        
+
         filteredUsers = filteredUsers.filter(user => {
           const value = getNestedValue(user, column);
-          
+
           if (value === undefined || value === null) return false;
-          
+
           if (Array.isArray(value)) {
-            return value.some(item => 
+            return value.some(item =>
               String(item).toLowerCase().includes(filterValue)
             );
           }
-          
+
           if (column.includes('date') || column.includes('Date')) {
             const dateStr = new Date(value).toISOString().split('T')[0];
             return dateStr.includes(filterValue);
           }
-          
+
           if (column.includes('daysSinceLastLogin')) {
             const days = parseInt(value) || 0;
             const filterDays = parseInt(filterValue) || 0;
             return days >= filterDays;
           }
-          
+
           return String(value).toLowerCase().includes(filterValue);
         });
       });
-      
+
       const statusFilter = document.getElementById('statusFilter').value;
       if (statusFilter) {
         filteredUsers = filteredUsers.filter(user => {
@@ -2062,21 +2063,21 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           return user.presence.presenceDefinition.systemPresence === statusFilter;
         });
       }
-      
+
       const selectedTeams = teamDropdown.getSelectedValues();
       if (selectedTeams.length > 0) {
-        filteredUsers = filteredUsers.filter(user => 
+        filteredUsers = filteredUsers.filter(user =>
           user.team && selectedTeams.includes(user.team.id)
         );
       }
-      
+
       const selectedMUs = managementUnitDropdown.getSelectedValues();
       if (selectedMUs.length > 0) {
         filteredUsers = filteredUsers.filter(user => {
           return user.team && selectedTeams.length > 0;
         });
       }
-      
+
       updateStats();
     }
 
@@ -2090,27 +2091,27 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       return users.sort((a, b) => {
         let valA = getNestedValue(a, sortColumn);
         let valB = getNestedValue(b, sortColumn);
-        
+
         if (Array.isArray(valA)) {
           valA = valA.map(v => v.name || v).join(', ');
         }
         if (Array.isArray(valB)) {
           valB = valB.map(v => v.name || v).join(', ');
         }
-        
+
         if (sortColumn.includes('date') || sortColumn.includes('Date') || sortColumn === 'dateLastLogin') {
           valA = valA ? new Date(valA).getTime() : 0;
           valB = valB ? new Date(valB).getTime() : 0;
         }
-        
+
         if (sortColumn === 'daysSinceLastLogin') {
           valA = Number(valA) || 0;
           valB = Number(valB) || 0;
         }
-        
+
         valA = String(valA || '').toLowerCase();
         valB = String(valB || '').toLowerCase();
-        
+
         if (sortDirection === 'asc') {
           return valA.localeCompare(valB, undefined, { numeric: true });
         } else {
@@ -2120,47 +2121,46 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     }
 
     function renderTableHeaders() {
-      const thead = document.querySelector('#usersTable thead');
       const headerRow = document.getElementById('tableHeadersRow');
       const filterRow = document.getElementById('tableFiltersRow');
-      
+
       if (!headerRow || !filterRow) return;
-      
+
       headerRow.innerHTML = '';
       filterRow.innerHTML = '';
-      
+
       visibleColumns.forEach(columnId => {
         const column = allColumns.find(c => c.id === columnId);
         if (!column) return;
-        
+
         const th = document.createElement('th');
         th.className = 'sortable';
         th.dataset.column = columnId;
         th.textContent = column.label;
-        
+
         const resizer = document.createElement('div');
         resizer.className = 'resizer';
         resizer.dataset.index = visibleColumns.indexOf(columnId);
         th.appendChild(resizer);
         th.style.position = 'relative';
-        
+
         th.addEventListener('click', function() {
           const column = this.dataset.column;
-          
+
           if (sortColumn === column) {
             sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
           } else {
             sortColumn = column;
             sortDirection = 'asc';
           }
-          
+
           renderTable();
         });
-        
+
         headerRow.appendChild(th);
-        
+
         const filterTd = document.createElement('td');
-        
+
         if (column.type === 'string' || column.type === 'array') {
           const input = document.createElement('input');
           input.type = 'text';
@@ -2236,10 +2236,10 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           input.placeholder = 'Filter...';
           filterTd.appendChild(input);
         }
-        
+
         filterRow.appendChild(filterTd);
       });
-      
+
       updateSortIndicators();
     }
 
@@ -2248,9 +2248,9 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       const pageUsers = sortUsers([...filteredUsers]).slice(start, end);
-      
+
       console.log(`Rendering table: ${pageUsers.length} users, visible columns:`, visibleColumns);
-      
+
       if (pageUsers.length === 0) {
         tbody.innerHTML = `<tr><td colspan="${visibleColumns.length}" style="text-align:center;padding:40px;color:var(--text-light)}">
           No users found. Try adjusting your filters or click "Load Users".
@@ -2258,14 +2258,14 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         updatePaginationInfo(0, 0);
         return;
       }
-      
+
       const queuePromises = pageUsers.map(user => fetchUserQueues(user.id));
       const queuesList = await Promise.all(queuePromises);
-      
+
       tbody.innerHTML = pageUsers.map((user, index) => {
         const rowCells = visibleColumns.map(columnId => {
           let cellValue = getNestedValue(user, columnId);
-          
+
           if (columnId === 'skills') {
             const skills = user.skills?.map(s => s.name) || [];
             return `
@@ -2278,7 +2278,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               </td>
             `;
           }
-          
+
           if (columnId === 'queues') {
             const userQueues = queuesList[index] || [];
             return `
@@ -2291,7 +2291,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               </td>
             `;
           }
-          
+
           if (columnId === 'roles') {
             const roles = user.roles || [];
             return `
@@ -2304,7 +2304,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               </td>
             `;
           }
-          
+
           if (columnId === 'routingStatus.status') {
             const status = cellValue || 'UNKNOWN';
             const presence = user.presence?.presenceDefinition?.systemPresence || 'Offline';
@@ -2316,23 +2316,23 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               </td>
             `;
           }
-          
+
           if (columnId === 'presence.presenceDefinition.systemPresence') {
             const presence = cellValue || 'Offline';
             const statusClass = getStatusClass(presence);
             return `<td><span class="status-badge ${statusClass}">${presence}</span></td>`;
           }
-          
+
           if (columnId === 'team.name') {
             return `<td>${cellValue || 'Unassigned'}</td>`;
           }
-          
+
           if (columnId === 'dateLastLogin') {
             if (!cellValue) return `<td>Never</td>`;
             const date = new Date(cellValue);
             return `<td>${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>`;
           }
-          
+
           if (columnId === 'daysSinceLastLogin') {
             const days = cellValue || 0;
             let daysClass = '';
@@ -2340,38 +2340,38 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
             else if (days > 7) daysClass = 'style="color: var(--warning);"';
             return `<td style="text-align:center;" ${daysClass}>${days === 999 ? 'Never' : days}</td>`;
           }
-          
+
           if (columnId === 'email') {
             return `<td>${cellValue || 'No email'}</td>`;
           }
-          
+
           if (columnId === 'name') {
             return `<td><strong>${cellValue || 'Unknown'}</strong></td>`;
           }
-          
+
           if (Array.isArray(cellValue)) {
             return `<td>${cellValue.join(', ') || ''}</td>`;
           }
-          
+
           if (typeof cellValue === 'object' && cellValue !== null) {
             return `<td>${JSON.stringify(cellValue)}</td>`;
           }
-          
+
           return `<td>${cellValue || ''}</td>`;
         }).join('');
-        
+
         return `<tr>${rowCells}</tr>`;
       }).join('');
-      
+
       updatePaginationInfo(start, end);
       updateSortIndicators();
     }
 
     function updatePaginationInfo(start, end) {
       const total = filteredUsers.length;
-      document.getElementById('paginationInfo').textContent = 
+      document.getElementById('paginationInfo').textContent =
         `Showing ${start + 1}-${Math.min(end, total)} of ${total} users`;
-      
+
       document.getElementById('prevPage').disabled = currentPage === 1;
       document.getElementById('nextPage').disabled = end >= total;
     }
@@ -2387,8 +2387,8 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     function updateStats() {
       const total = filteredUsers.length;
-      const online = filteredUsers.filter(u => 
-        u.presence?.presenceDefinition?.systemPresence === 'Available' || 
+      const online = filteredUsers.filter(u =>
+        u.presence?.presenceDefinition?.systemPresence === 'Available' ||
         u.presence?.presenceDefinition?.systemPresence === 'On Queue'
       ).length;
       const active = filteredUsers.filter(u => {
@@ -2401,7 +2401,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         const presence = u.presence?.presenceDefinition?.systemPresence || '';
         return presence === 'Away' || presence === 'Breaks' || presence === 'Meal';
       }).length;
-      
+
       document.getElementById('totalUsers').textContent = total;
       document.getElementById('onlineUsers').textContent = online;
       document.getElementById('activeUsers').textContent = active;
@@ -2412,8 +2412,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     function showColumnManager() {
       const modal = document.getElementById('columnManagerModal');
       const searchInput = document.getElementById('columnSearch');
-      const columnsContainer = document.getElementById('columnsListContainer');
-      
+
       searchInput.value = '';
       renderColumnList();
       modal.classList.add('open');
@@ -2423,37 +2422,37 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     function renderColumnList(searchTerm = '') {
       const columnsContainer = document.getElementById('columnsListContainer');
       const selectedCountElement = document.getElementById('selectedColumnsCount');
-      
+
       let html = '';
       let totalSelected = 0;
-      
+
       const filteredCategories = {};
-      
+
       Object.keys(columnCategories).forEach(category => {
         const columns = columnCategories[category].filter(column => {
           if (!searchTerm) return true;
           const search = searchTerm.toLowerCase();
-          return column.label.toLowerCase().includes(search) || 
+          return column.label.toLowerCase().includes(search) ||
                  column.id.toLowerCase().includes(search) ||
                  category.toLowerCase().includes(search);
         });
-        
+
         if (columns.length > 0) {
           filteredCategories[category] = columns;
         }
       });
-      
+
       Object.keys(filteredCategories).forEach(category => {
         const columns = filteredCategories[category];
         let categorySelected = 0;
-        
+
         const columnsHtml = columns.map(column => {
           const isSelected = visibleColumns.includes(column.id);
           if (isSelected) {
             categorySelected++;
             totalSelected++;
           }
-          
+
           return `
             <div class="column-item" data-column-id="${column.id}">
               <input type="checkbox" id="col_${column.id}" ${isSelected ? 'checked' : ''}>
@@ -2462,7 +2461,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
             </div>
           `;
         }).join('');
-        
+
         html += `
           <div class="columns-category">
             <div class="category-header" onclick="toggleCategory(this)">
@@ -2475,11 +2474,11 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           </div>
         `;
       });
-      
+
       columnsContainer.innerHTML = html || '<div style="text-align:center;padding:40px;color:var(--text-light)">No columns found matching your search.</div>';
-      
+
       selectedCountElement.textContent = totalSelected;
-      
+
       document.querySelectorAll('.column-item input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
           const columnId = this.id.replace('col_', '');
@@ -2493,7 +2492,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
               visibleColumns.splice(index, 1);
             }
           }
-          
+
           renderColumnList(document.getElementById('columnSearch').value);
         });
       });
@@ -2510,12 +2509,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     function saveColumnPreferences() {
       localStorage.setItem('visibleColumns', JSON.stringify(visibleColumns));
-      
+
       document.getElementById('columnManagerModal').classList.remove('open');
-      
+
       renderTableHeaders();
       renderTable();
-      
+
       showMessage('Column preferences saved', 'success');
     }
 
@@ -2524,109 +2523,109 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       const table = document.getElementById('usersTable');
       tableElement = table;
       const headers = table.querySelectorAll('thead tr:first-child th');
-      
+
       headers.forEach((header, index) => {
         originalWidths[index] = header.getBoundingClientRect().width;
       });
-      
+
       headers.forEach((header, index) => {
         const resizer = document.createElement('div');
         resizer.classList.add('resizer');
         resizer.dataset.index = index;
         header.appendChild(resizer);
-        
+
         header.style.position = 'relative';
-        
+
         resizer.addEventListener('mousedown', startResize);
         resizer.addEventListener('touchstart', startResizeTouch);
       });
-      
+
       const inactiveTable = document.getElementById('inactiveUsersTable');
       if (inactiveTable) {
         setupInactiveColumnResizing(inactiveTable);
       }
     }
-    
+
     function setupInactiveColumnResizing(table) {
       const headers = table.querySelectorAll('thead tr:first-child th');
-      
+
       headers.forEach((header, index) => {
         const resizer = document.createElement('div');
         resizer.classList.add('resizer');
         resizer.dataset.index = index;
         header.appendChild(resizer);
-        
+
         header.style.position = 'relative';
-        
+
         resizer.addEventListener('mousedown', startResize);
         resizer.addEventListener('touchstart', startResizeTouch);
       });
     }
-    
+
     function startResize(e) {
       e.preventDefault();
       activeResizer = e.target;
       columnIndex = parseInt(activeResizer.dataset.index);
       startX = e.clientX || e.pageX;
-      
+
       const header = activeResizer.parentElement;
       startWidth = header.getBoundingClientRect().width;
-      
+
       activeResizer.classList.add('resizing');
-      
+
       document.addEventListener('mousemove', resize);
       document.addEventListener('mouseup', stopResize);
     }
-    
+
     function startResizeTouch(e) {
       e.preventDefault();
       activeResizer = e.target;
       columnIndex = parseInt(activeResizer.dataset.index);
       startX = e.touches[0].clientX;
-      
+
       const header = activeResizer.parentElement;
       startWidth = header.getBoundingClientRect().width;
-      
+
       activeResizer.classList.add('resizing');
-      
+
       document.addEventListener('touchmove', resizeTouch);
       document.addEventListener('touchend', stopResize);
     }
-    
+
     function resize(e) {
       if (!activeResizer) return;
-      
+
       const currentX = e.clientX || e.pageX;
       const dx = currentX - startX;
       const newWidth = Math.max(50, startWidth + dx);
-      
+
       const header = activeResizer.parentElement;
       const table = header.closest('table');
       const allRows = table.querySelectorAll('tbody tr');
-      
+
       header.style.width = `${newWidth}px`;
-      
+
       allRows.forEach(row => {
         const cell = row.querySelector(`td:nth-child(${columnIndex + 1})`);
         if (cell) {
           cell.style.width = `${newWidth}px`;
         }
       });
-      
+
       e.preventDefault();
     }
-    
+
     function resizeTouch(e) {
       if (!activeResizer) return;
-      
+
       const currentX = e.touches[0].clientX;
       const dx = currentX - startX;
       const newWidth = Math.max(50, startWidth + dx);
-      
+
       const header = activeResizer.parentElement;
       const table = header.closest('table');
       const allRows = table.querySelectorAll('tbody tr');
-      
+
       header.style.width = `${newWidth}px`;
       allRows.forEach(row => {
         const cell = row.querySelector(`td:nth-child(${columnIndex + 1})`);
@@ -2635,42 +2634,24 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         }
       });
     }
-    
+
     function stopResize() {
       if (!activeResizer) return;
-      
+
       activeResizer.classList.remove('resizing');
       activeResizer = null;
-      
+
       document.removeEventListener('mousemove', resize);
       document.removeEventListener('mouseup', stopResize);
       document.removeEventListener('touchmove', resizeTouch);
       document.removeEventListener('touchend', stopResize);
     }
-    
+
     function resetColumnWidths() {
       const table = document.getElementById('usersTable');
       const headers = table.querySelectorAll('thead tr:first-child th');
       const rows = table.querySelectorAll('tbody tr');
-      
-      headers.forEach((header, index) => {
-        header.style.width = '';
-        rows.forEach(row => {
-          const cell = row.querySelector(`td:nth-child(${index + 1})`);
-            if (cell) {
-            cell.style.width = '';
-          }
-        });
-      });
-      
-      showMessage('Column sizes reset to default', 'success');
-    }
-    
-    function resetInactiveColumnWidths() {
-      const table = document.getElementById('inactiveUsersTable');
-      const headers = table.querySelectorAll('thead tr:first-child th');
-      const rows = table.querySelectorAll('tbody tr');
-      
+
       headers.forEach((header, index) => {
         header.style.width = '';
         rows.forEach(row => {
@@ -2680,7 +2661,25 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           }
         });
       });
-      
+
+      showMessage('Column sizes reset to default', 'success');
+    }
+
+    function resetInactiveColumnWidths() {
+      const table = document.getElementById('inactiveUsersTable');
+      const headers = table.querySelectorAll('thead tr:first-child th');
+      const rows = table.querySelectorAll('tbody tr');
+
+      headers.forEach((header, index) => {
+        header.style.width = '';
+        rows.forEach(row => {
+          const cell = row.querySelector(`td:nth-child(${index + 1})`);
+          if (cell) {
+            cell.style.width = '';
+          }
+        });
+      });
+
       showMessage('Inactive users column sizes reset', 'success');
     }
 
@@ -2814,7 +2813,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         placeholder: 'Select teams',
         searchPlaceholder: 'Search teams...'
       });
-      
+
       managementUnitDropdown = createCheckboxDropdown('managementUnitDropdown', {
         placeholder: 'Select management units',
         searchPlaceholder: 'Search management units...'
@@ -2836,12 +2835,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
     function setupTabs() {
       const tabs = document.querySelectorAll('.tab');
       const tabContents = document.querySelectorAll('.tab-content');
-      
+
       tabs.forEach(tab => {
         tab.addEventListener('click', () => {
           tabs.forEach(t => t.classList.remove('active'));
           tabContents.forEach(c => c.classList.remove('active'));
-          
+
           tab.classList.add('active');
           const tabId = tab.dataset.tab;
           document.getElementById(tabId).classList.add('active');
@@ -2854,17 +2853,17 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('Please load users first', 'warning');
         return;
       }
-      
+
       const daysSinceLogin = parseInt(document.getElementById('daysSinceLogin').value) || 30;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
       const teamFilter = document.getElementById('inactiveTeamFilter').value;
-      
+
       let filteredInactive = availableUsers.filter(user => {
         if (user.daysSinceLastLogin < daysSinceLogin) {
           return false;
         }
-        
+
         if (dateFrom && user.dateLastLogin) {
           const lastLogin = new Date(user.dateLastLogin);
           const fromDate = new Date(dateFrom);
@@ -2872,7 +2871,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
             return false;
           }
         }
-        
+
         if (dateTo && user.dateLastLogin) {
           const lastLogin = new Date(user.dateLastLogin);
           const toDate = new Date(dateTo);
@@ -2880,55 +2879,53 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
             return false;
           }
         }
-        
+
         if (teamFilter && user.team && user.team.id !== teamFilter) {
           return false;
         }
-        
+
         return true;
       });
-      
+
       filteredInactive.sort((a, b) => b.daysSinceLastLogin - a.daysSinceLastLogin);
-      
+
       inactiveUsers = filteredInactive;
       renderInactiveUsersTable();
       updateInactiveStats();
-      
+
       showMessage(`Found ${inactiveUsers.length} inactive users`, 'success');
     }
 
     async function renderInactiveUsersTable() {
       const tbody = document.querySelector('#inactiveUsersTable tbody');
-      
+
       if (inactiveUsers.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-light)}">
           No inactive users found. Adjust your criteria and try again.
         </td></tr>`;
         return;
       }
-      
+
       const usersToFetch = inactiveUsers.slice(0, 50);
       const queuePromises = usersToFetch.map(user => fetchUserQueues(user.id));
       const queuesList = await Promise.all(queuePromises);
-      
+
       tbody.innerHTML = inactiveUsers.map((user, index) => {
-        const status = user.routingStatus?.status || 'UNKNOWN';
         const presence = user.presence?.presenceDefinition?.systemPresence || 'Offline';
         const team = user.team?.name || 'Unassigned';
-        const lastLogin = user.dateLastLogin ? 
-          new Date(user.dateLastLogin).toLocaleDateString() + ' ' + 
-          new Date(user.dateLastLogin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
+        const lastLogin = user.dateLastLogin ?
+          new Date(user.dateLastLogin).toLocaleDateString() + ' ' +
+          new Date(user.dateLastLogin).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
           : 'Never';
         const daysSinceLogin = user.daysSinceLastLogin || 0;
         const roles = user.roles || [];
         const userQueues = index < queuesList.length ? queuesList[index] : [];
-        const skills = user.skills?.map(s => s.name) || [];
         const statusClass = getStatusClass(presence);
-        
+
         let daysClass = '';
         if (daysSinceLogin > 30) daysClass = 'style="color: var(--danger); font-weight: bold;"';
         else if (daysSinceLogin > 7) daysClass = 'style="color: var(--warning);"';
-        
+
         return `
           <tr>
             <td><strong>${user.name || 'Unknown'}</strong></td>
@@ -2963,11 +2960,11 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         document.getElementById('maxDaysInactive').textContent = '0';
         return;
       }
-      
+
       const total = inactiveUsers.length;
       const avgDays = Math.round(inactiveUsers.reduce((sum, user) => sum + user.daysSinceLastLogin, 0) / total);
       const maxDays = Math.max(...inactiveUsers.map(user => user.daysSinceLastLogin));
-      
+
       document.getElementById('totalInactiveUsers').textContent = total;
       document.getElementById('avgDaysInactive').textContent = avgDays;
       document.getElementById('maxDaysInactive').textContent = maxDays;
@@ -2975,9 +2972,9 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
 
     function setupEventListeners() {
       document.getElementById('fetchUsers').addEventListener('click', fetchUsers);
-      
+
       document.getElementById('findInactiveUsers').addEventListener('click', findInactiveUsers);
-      
+
       document.getElementById('refreshData').addEventListener('click', async () => {
         if (availableUsers.length === 0) {
           await fetchUsers();
@@ -2987,7 +2984,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         }
         showMessage('Data refreshed', 'success');
       });
-      
+
       document.getElementById('refreshRoles').addEventListener('click', () => {
         if (availableUsers.length === 0) {
           showMessage('Please load users first', 'warning');
@@ -2996,39 +2993,35 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         updateRolesData();
         showMessage('Roles data refreshed', 'success');
       });
-      
+
       document.getElementById('exportCSV').addEventListener('click', exportToCSV);
-      
       document.getElementById('exportInactiveCSV').addEventListener('click', exportInactiveToCSV);
-      
       document.getElementById('exportRolesCSV').addEventListener('click', exportRolesSummaryToCSV);
-      
+
       document.getElementById('showAllUsers').addEventListener('click', () => {
         if (availableUsers.length === 0) {
           showMessage('Please load users first', 'warning');
           return;
         }
-        
+
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
+
         document.querySelector('.tab[data-tab="active-users"]').classList.add('active');
         document.getElementById('active-users').classList.add('active');
-        
+
         clearFilters();
-        
+
         showMessage('Showing all users', 'success');
       });
-      
+
       document.getElementById('clearFilters').addEventListener('click', clearFilters);
-      
       document.getElementById('resetColumnWidths').addEventListener('click', resetColumnWidths);
-      
       document.getElementById('resetInactiveColumnWidths').addEventListener('click', resetInactiveColumnWidths);
-      
+
       // Logout button
       document.getElementById('logoutBtn').addEventListener('click', logout);
-      
+
       // Column manager event listeners
       document.getElementById('manageColumns').addEventListener('click', showColumnManager);
       document.getElementById('closeColumnManager').addEventListener('click', () => {
@@ -3037,13 +3030,13 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       document.getElementById('cancelColumns').addEventListener('click', () => {
         document.getElementById('columnManagerModal').classList.remove('open');
       });
-      
+
       document.getElementById('saveColumns').addEventListener('click', saveColumnPreferences);
-      
+
       document.getElementById('columnSearch').addEventListener('input', function() {
         renderColumnList(this.value);
       });
-      
+
       document.getElementById('selectAllColumns').addEventListener('click', function() {
         allColumns.forEach(column => {
           if (!visibleColumns.includes(column.id)) {
@@ -3052,66 +3045,66 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         });
         renderColumnList(document.getElementById('columnSearch').value);
       });
-      
+
       document.getElementById('deselectAllColumns').addEventListener('click', function() {
         visibleColumns = [];
         renderColumnList(document.getElementById('columnSearch').value);
       });
-      
+
       document.getElementById('resetToDefault').addEventListener('click', function() {
         visibleColumns = [...DEFAULT_VISIBLE_COLUMNS];
         renderColumnList(document.getElementById('columnSearch').value);
       });
-      
+
       document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && document.getElementById('columnManagerModal').classList.contains('open')) {
           document.getElementById('columnManagerModal').classList.remove('open');
         }
       });
-      
+
       document.getElementById('columnManagerModal').addEventListener('click', function(e) {
         if (e.target === this) {
           this.classList.remove('open');
         }
       });
-      
+
       document.getElementById('pageSize').addEventListener('change', function() {
         pageSize = parseInt(this.value);
         currentPage = 1;
         renderTable();
       });
-      
+
       document.getElementById('prevPage').addEventListener('click', () => {
         currentPage--;
         renderTable();
       });
-      
+
       document.getElementById('nextPage').addEventListener('click', () => {
         currentPage++;
         renderTable();
       });
-      
+
       document.getElementById('globalSearch').addEventListener('input', function() {
         globalSearch = this.value;
         currentPage = 1;
         applyFilters();
         renderTable();
       });
-      
+
       document.getElementById('roleSearch').addEventListener('input', function() {
         renderRoles();
       });
-      
+
       document.getElementById('roleTeamFilter').addEventListener('change', function() {
         renderRoles();
       });
-      
+
       document.getElementById('statusFilter').addEventListener('change', function() {
         currentPage = 1;
         applyFilters();
         renderTable();
       });
-      
+
       // Note: Column filter event listeners are now added dynamically in renderTableHeaders
     }
 
@@ -3120,53 +3113,53 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('No data to export', 'info');
         return;
       }
-      
+
       const headers = visibleColumns.map(columnId => {
         const column = allColumns.find(c => c.id === columnId);
         return column ? column.label : columnId;
       });
-      
+
       headers.push('User ID');
-      
+
       const data = filteredUsers.map(user => {
         const row = visibleColumns.map(columnId => {
           let value = getNestedValue(user, columnId);
-          
+
           if (columnId === 'skills') {
             const skills = user.skills?.map(s => s.name) || [];
             return skills.join('; ');
           }
-          
+
           if (columnId === 'roles') {
             const roles = user.roles || [];
             return roles.join('; ');
           }
-          
+
           if (columnId === 'dateLastLogin' && value) {
             return new Date(value).toISOString();
           }
-          
+
           if (Array.isArray(value)) {
             return value.join('; ');
           }
-          
+
           if (typeof value === 'object' && value !== null) {
             return JSON.stringify(value);
           }
-          
+
           return value || '';
         });
-        
+
         row.push(user.id || '');
-        
+
         return row;
       });
-      
+
       const csvContent = [
         headers.join(','),
         ...data.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -3176,7 +3169,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showMessage(`Exported ${filteredUsers.length} users to CSV with ${visibleColumns.length} columns`, 'success');
     }
 
@@ -3185,12 +3178,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         showMessage('No inactive users to export', 'info');
         return;
       }
-      
+
       const headers = [
-        'Name', 'Email', 'Role', 'Team', 'Last Login', 
+        'Name', 'Email', 'Role', 'Team', 'Last Login',
         'Days Since Login', 'Status', 'User ID'
       ];
-      
+
       const data = inactiveUsers.map(user => [
         user.name || '',
         user.email || '',
@@ -3201,12 +3194,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
         user.presence?.presenceDefinition?.systemPresence || '',
         user.id || ''
       ]);
-      
+
       const csvContent = [
         headers.join(','),
         ...data.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -3216,29 +3209,29 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showMessage(`Exported ${inactiveUsers.length} inactive users to CSV`, 'success');
     }
 
     function exportRolesSummaryToCSV() {
-      const sortedRoles = Object.keys(rolesData).sort((a, b) => 
+      const sortedRoles = Object.keys(rolesData).sort((a, b) =>
         rolesData[b].users.length - rolesData[a].users.length
       );
-      
+
       if (sortedRoles.length === 0) {
         showMessage('No roles data to export', 'info');
         return;
       }
-      
+
       const headers = [
         'Role Name', 'User Count', 'Team Count', 'Teams', 'Sample Users'
       ];
-      
+
       const data = sortedRoles.map(role => {
         const roleInfo = rolesData[role];
         const teams = Array.from(roleInfo.teams);
         const sampleUsers = roleInfo.users.slice(0, 3).map(u => u.name).join('; ');
-        
+
         return [
           role,
           roleInfo.users.length,
@@ -3247,12 +3240,12 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
           sampleUsers
         ];
       });
-      
+
       const csvContent = [
         headers.join(','),
         ...data.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       ].join('\n');
-      
+
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -3262,7 +3255,7 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showMessage(`Exported ${sortedRoles.length} roles to CSV`, 'success');
     }
 
@@ -3273,11 +3266,11 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       document.getElementById('statusFilter').value = '';
       teamDropdown.setSelectedValues([]);
       managementUnitDropdown.setSelectedValues([]);
-      
+
       document.querySelectorAll('.column-filter').forEach(input => {
         input.value = '';
       });
-      
+
       currentPage = 1;
       applyFilters();
       renderTable();
@@ -3288,14 +3281,10 @@ const CLIENT_SECRET = 'YOUR_CLIENT_SECRET_HERE';
       document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
     }
 
-    window.addEventListener('load', () => {
-    });
-
     // Make functions available globally for onclick handlers
     window.viewRoleUsers = viewRoleUsers;
     window.exportRoleUsers = exportRoleUsers;
     window.toggleCategory = toggleCategory;
-
   </script>
 </body>
 </html>
