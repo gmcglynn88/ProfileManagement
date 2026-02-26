@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Genesys Cloud - User & Role Manager</title>
+  <title>Genesys Cloud - JLA User Manager</title>
   <style>
     :root{
       --primary-color:#63AB8F; --secondary-color:#4A8C7D; --border-color:#DEE2E6;
@@ -96,21 +96,6 @@
       background: var(--filter-bg);
       font-weight: 600;
       border-color: var(--primary-color);
-    }
-    
-    .client-warning {
-      background: rgba(255, 193, 7, 0.1);
-      border-left: 4px solid var(--warning);
-      padding: 12px;
-      margin: 12px 0;
-      border-radius: 6px;
-      font-size: 13px;
-      color: var(--text-color);
-      display: none;
-    }
-    
-    .client-warning.active {
-      display: block;
     }
 
     .token-info {
@@ -342,19 +327,15 @@
       border-bottom:1px dotted var(--text-light);
     }
 
-    .debug-section {
-      margin-top: 24px;
-      border-top: 1px solid var(--border-color);
-      padding-top: 16px;
-    }
-    
-    .debug-toggle {
-      background: var(--text-light);
+    .jla-badge {
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
       color: white;
-      padding: 6px 12px;
+      padding: 4px 12px;
+      border-radius: 20px;
       font-size: 12px;
-      width: auto;
-      margin-bottom: 12px;
+      font-weight: 600;
+      display: inline-block;
+      margin-left: 10px;
     }
   </style>
 </head>
@@ -362,10 +343,13 @@
   <div id="authContainer" style="display:none;">
     <div class="container" style="max-width:500px;margin:100px auto;">
       <div class="card">
-        <h3 style="margin-top:0;">🔐 Genesys Cloud Authentication</h3>
+        <h3 style="margin-top:0;">🔐 JLA Group Authentication</h3>
+        <div style="text-align:center;margin-bottom:20px;">
+          <span class="jla-badge">JLA GROUP</span>
+        </div>
         <div class="auto-auth-message" style="text-align:center;padding:30px;">
           <div class="spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto;"></div>
-          <p style="margin-top:20px;font-size:15px;color:var(--text-light);">Attempting automatic authentication...</p>
+          <p style="margin-top:20px;font-size:15px;color:var(--text-light);">Connecting to JLA Group...</p>
           <p style="font-size:13px;color:var(--text-light);" id="authDebugInfo"></p>
         </div>
         <button id="btnForceAuth" class="btn btn-auth btn-block" style="display:none;">🔑 Force Authentication</button>
@@ -378,40 +362,35 @@
   <div id="mainContent" style="display:none;">
     <div class="container">
       <header>
-        <h1>👥 Genesys Cloud - User & Role Manager</h1>
-        <div class="subtitle">View and manage users, roles, and permissions across your organization</div>
+        <h1>👥 JLA Group - User Manager <span class="jla-badge">JLA</span></h1>
+        <div class="subtitle">View JLA Group users, roles, and permissions</div>
       </header>
 
       <div class="main-grid">
         <div class="left-column">
           <div class="card">
-            <h2>🔌 Connection</h2>
+            <h2>🔌 JLA Connection</h2>
             
             <div class="region-selector">
               <select id="regionSelect">
-                <option value="eu-west-1">🇮🇪 Dublin (mypurecloud.ie)</option>
-                <option value="eu-west-2">🇬🇧 London (euw2.pure.cloud)</option>
+                <option value="eu-west-2" selected>🇬🇧 London (euw2.pure.cloud)</option>
               </select>
-              <button id="btnSwitchRegion" class="btn-refresh">Switch</button>
+              <button id="btnSwitchRegion" class="btn-refresh">Connect</button>
             </div>
             
-            <div class="form-group">
-              <label>Client ID</label>
-              <select id="clientIdSelect">
-                <optgroup label="🇮🇪 Dublin Clients">
-                  <option value="fe305808-b368-4547-8af9-325d28d552bb">IPIDEV (Dublin)</option>
-                </optgroup>
-                <optgroup label="🇬🇧 London Clients">
-                  <option value="d968eca4-cdb7-4b90-91b1-4628b5bb679e">Group CX3 (London)</option>
-                  <option value="a236ffec-2893-4ccd-81bb-ef2f4a2fe316">Group CX1 (London)</option>
-                  <option value="cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad">JLA Group (London)</option>
-                </optgroup>
-              </select>
+            <div style="background:var(--pill);padding:12px;border-radius:8px;margin-bottom:20px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:24px;">🏢</span>
+                <div>
+                  <div style="font-weight:600;font-size:16px;">JLA Group</div>
+                  <div style="font-size:12px;color:var(--text-light);">Client ID: cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad</div>
+                </div>
+              </div>
             </div>
             
             <div class="form-group">
               <label>Environment</label>
-              <input type="text" id="envDisplay" value="Select environment..." readonly style="background:var(--filter-bg);">
+              <input type="text" id="envDisplay" value="London (euw2.pure.cloud)" readonly style="background:var(--filter-bg);">
             </div>
             
             <div class="form-group">
@@ -420,10 +399,6 @@
                 <div id="statusIndicator" style="width:14px;height:14px;border-radius:50%;background:#6c757d;"></div>
                 <span id="statusText">Not Connected</span>
               </div>
-            </div>
-
-            <div id="regionWarning" class="client-warning">
-              ⚠️ Warning: Client ID may not work in the selected region.
             </div>
 
             <div id="tokenInfo" class="token-info">
@@ -438,13 +413,13 @@
                 <span>🚪 Disconnect</span>
               </button>
               <button id="btnReauth" style="background:var(--warning);color:var(--text-color);flex:1;">
-                <span>🔄 Re-authenticate</span>
+                <span>🔄 Reconnect</span>
               </button>
             </div>
           </div>
 
           <div class="card">
-            <h2>📊 User Statistics</h2>
+            <h2>📊 JLA Statistics</h2>
             <div class="stats-grid" style="grid-template-columns:1fr 1fr;">
               <div class="stat-card" style="padding:16px;">
                 <div class="stat-label">Total Users</div>
@@ -476,8 +451,8 @@
             </div>
 
             <div style="margin-top:24px;font-size:13px;color:var(--text-light);padding:12px;background:var(--pill);border-radius:8px;">
-              <strong>📋 Summary</strong><br>
-              <span id="totalRolesSummary">Loading user data...</span>
+              <strong>📋 JLA Summary</strong><br>
+              <span id="totalRolesSummary">Click Load Users to fetch data</span>
             </div>
           </div>
 
@@ -485,7 +460,7 @@
             <h2>⚡ Actions</h2>
             <div class="action-buttons">
               <button id="btnFetchUsers" class="btn btn-success" style="flex:2;" disabled>
-                <span>🔄 Load Users</span>
+                <span>🔄 Load JLA Users</span>
               </button>
               <button id="btnExportUsers" class="btn btn-export" style="flex:1;" disabled>
                 <span>📥 Export</span>
@@ -503,17 +478,17 @@
 
         <div class="right-column">
           <div class="tabs">
-            <button class="tab active" data-tab="users">👥 Users</button>
-            <button class="tab" data-tab="roles">🔑 Roles</button>
+            <button class="tab active" data-tab="users">👥 JLA Users</button>
+            <button class="tab" data-tab="roles">🔑 JLA Roles</button>
             <button class="tab" data-tab="logs">📝 Logs</button>
           </div>
 
           <div id="tab-users" class="tab-content active">
             <div class="card">
               <div class="search-filter-bar">
-                <input type="text" id="userSearch" placeholder="🔍 Search by name, email, team, role...">
+                <input type="text" id="userSearch" placeholder="🔍 Search JLA users by name, email, team, role...">
                 <select id="userFilter">
-                  <option value="all">All Users</option>
+                  <option value="all">All JLA Users</option>
                   <option value="agent">Agents Only</option>
                   <option value="supervisor">Supervisors Only</option>
                   <option value="admin">Admins Only</option>
@@ -541,7 +516,7 @@
                   </thead>
                   <tbody id="usersTableBody">
                     <tr><td colspan="7" style="text-align:center;padding:48px;color:var(--text-light);">
-                      Click "Load Users" to fetch data
+                      Click "Load JLA Users" to fetch data
                     </td></tr>
                   </tbody>
                 </table>
@@ -551,7 +526,7 @@
 
           <div id="tab-roles" class="tab-content">
             <div class="card">
-              <h2 style="margin-top:0;">🔑 Role Distribution</h2>
+              <h2 style="margin-top:0;">🔑 JLA Role Distribution</h2>
               
               <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));">
                 <div class="stat-card">
@@ -572,7 +547,7 @@
               </div>
 
               <div style="margin-top:32px;">
-                <h3>📋 All Roles</h3>
+                <h3>📋 All JLA Roles</h3>
                 <div class="table-container" style="max-height:400px;">
                   <table>
                     <thead>
@@ -584,7 +559,7 @@
                       </tr>
                     </thead>
                     <tbody id="rolesTableBody">
-                      <tr><td colspan="4" style="text-align:center;padding:48px;">Load users to see role data</td></tr>
+                      <tr><td colspan="4" style="text-align:center;padding:48px;">Load JLA users to see role data</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -613,7 +588,7 @@
                     </tr>
                   </thead>
                   <tbody id="logsTableBody">
-                    <tr><td colspan="4" style="text-align:center;padding:24px;">System initialised</td></tr>
+                    <tr><td colspan="4" style="text-align:center;padding:24px;">JLA Manager initialised</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -626,7 +601,7 @@
 
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div id="loadingText" style="font-size:20px;font-weight:600;margin-bottom:12px;">Loading Users...</div>
+    <div id="loadingText" style="font-size:20px;font-weight:600;margin-bottom:12px;">Loading JLA Users...</div>
     <div id="loadingSubtext" style="font-size:15px;color:var(--text-light);text-align:center;max-width:500px;"></div>
     <div class="progress-container">
       <div class="progress-bar">
@@ -636,37 +611,18 @@
   </div>
 
   <script>
-    // ==================== CONFIGURATION ====================
-    const CLIENT_IDS = {
-      'dublin_ipidev': 'fe305808-b368-4547-8af9-325d28d552bb',
-      'london_cx3': 'd968eca4-cdb7-4b90-91b1-4628b5bb679e',
-      'london_cx1': 'a236ffec-2893-4ccd-81bb-ef2f4a2fe316',
-      'london_JLA': 'cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad'
-    };
+    // ==================== JLA CONFIGURATION ====================
+    // JLA Group specific settings
+    const JLA_CLIENT_ID = 'cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad';
+    const JLA_REGION = 'eu-west-2';
     
-    const CLIENT_REGION_MAP = {
-      [CLIENT_IDS.dublin_ipidev]: 'eu-west-1',
-      [CLIENT_IDS.london_cx3]: 'eu-west-2',
-      [CLIENT_IDS.london_cx1]: 'eu-west-2',
-      [CLIENT_IDS.london_JLA]: 'eu-west-2'
-    };
+    // Hardcoded for JLA only
+    let CLIENT_ID = JLA_CLIENT_ID;
     
-    const REGION_DEFAULT_CLIENT = {
-      'eu-west-1': CLIENT_IDS.dublin_ipidev,
-      'eu-west-2': CLIENT_IDS.london_cx3
-    };
-    
-    let CLIENT_ID = CLIENT_IDS.dublin_ipidev;
-    
-    // IMPORTANT: Update this to your new app's URL
-    const REDIRECT_URI = 'https://gmcglynn88.github.io/ProfileManagement/'; // Update this for your new app
+    // Update this to your new app's URL
+    const REDIRECT_URI = 'https://gmcglynn88.github.io/ProfileManagement/';
     
     const ENVIRONMENTS = {
-      'eu-west-1': { 
-        name: '🇮🇪 Dublin - mypurecloud.ie', 
-        api: 'https://api.mypurecloud.ie', 
-        login: 'https://login.mypurecloud.ie' 
-      },
       'eu-west-2': { 
         name: '🇬🇧 London - euw2.pure.cloud', 
         api: 'https://api.euw2.pure.cloud', 
@@ -675,18 +631,17 @@
     };
 
     const STORAGE_KEYS = {
-      ENVIRONMENT: 'gc_users_environment',
-      ENV_REGION: 'gc_users_env_region',
-      TOKEN: 'gc_users_token',
-      TOKEN_EXPIRY: 'gc_users_token_expiry',
-      REFRESH_TOKEN: 'gc_users_refresh_token',
-      CLIENT_ID: 'gc_users_client_id',
-      SELECTED_REGION: 'gc_users_selected_region'
+      ENVIRONMENT: 'gc_jla_environment',
+      ENV_REGION: 'gc_jla_env_region',
+      TOKEN: 'gc_jla_token',
+      TOKEN_EXPIRY: 'gc_jla_token_expiry',
+      REFRESH_TOKEN: 'gc_jla_refresh_token',
+      SELECTED_REGION: 'gc_jla_selected_region'
     };
 
     let CURRENT_CONFIG = {
-      environment: '',
-      environmentRegion: '',
+      environment: ENVIRONMENTS[JLA_REGION].api,
+      environmentRegion: JLA_REGION,
       token: null,
       tokenExpiry: null,
       refreshToken: null
@@ -721,8 +676,6 @@
       btnForceAuth: document.getElementById('btnForceAuth'),
       
       regionSelect: document.getElementById('regionSelect'),
-      clientIdSelect: document.getElementById('clientIdSelect'),
-      regionWarning: document.getElementById('regionWarning'),
       envDisplay: document.getElementById('envDisplay'),
       statusIndicator: document.getElementById('statusIndicator'),
       statusText: document.getElementById('statusText'),
@@ -808,32 +761,16 @@
         const environment = localStorage.getItem(STORAGE_KEYS.ENVIRONMENT);
         const envRegion = localStorage.getItem(STORAGE_KEYS.ENV_REGION);
         const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
-        const storedClientId = localStorage.getItem(STORAGE_KEYS.CLIENT_ID);
         const storedRegion = localStorage.getItem(STORAGE_KEYS.SELECTED_REGION);
 
-        logMessage('DEBUG', 'Loading stored credentials', {
+        logMessage('DEBUG', 'Loading stored JLA credentials', {
           hasToken: !!token,
           envRegion,
-          storedRegion,
-          storedClientId: storedClientId?.substring(0,8)
+          storedRegion
         });
 
         if (storedRegion) {
-          const options = Array.from(el.regionSelect.options);
-          if (options.some(opt => opt.value === storedRegion)) {
-            el.regionSelect.value = storedRegion;
-          }
-        }
-
-        if (storedClientId) {
-          CLIENT_ID = storedClientId;
-          const options = Array.from(el.clientIdSelect.options);
-          for (let i = 0; i < options.length; i++) {
-            if (options[i].value === storedClientId) {
-              options[i].selected = true;
-              break;
-            }
-          }
+          el.regionSelect.value = storedRegion;
         }
 
         if (token && tokenExpiry && environment && envRegion) {
@@ -845,21 +782,19 @@
             refreshToken
           };
 
-          // Check if token is still valid
           if (Date.now() < CURRENT_CONFIG.tokenExpiry - (5 * 60 * 1000)) {
-            if (!storedRegion || envRegion === storedRegion) {
-              logMessage('SUCCESS', 'Valid stored token found', `Expires: ${new Date(parseInt(tokenExpiry, 10)).toLocaleString()}`);
+            if (envRegion === JLA_REGION) {
+              logMessage('SUCCESS', 'Valid JLA token found', `Expires: ${new Date(parseInt(tokenExpiry, 10)).toLocaleString()}`);
               return true;
             } else {
-              logMessage('WARN', 'Token region mismatch', `Token: ${envRegion}, Selected: ${storedRegion}`);
+              logMessage('WARN', 'Token region mismatch', `Expected ${JLA_REGION}, got ${envRegion}`);
             }
           } else {
-            logMessage('WARN', 'Stored token expired', `Expired: ${new Date(parseInt(tokenExpiry, 10)).toLocaleString()}`);
+            logMessage('WARN', 'Stored JLA token expired');
           }
         }
       } catch (e) {
         console.warn('Failed to load stored credentials:', e);
-        logMessage('ERROR', 'Failed to load credentials', e.message);
       }
       return false;
     }
@@ -875,14 +810,12 @@
         localStorage.setItem(STORAGE_KEYS.ENV_REGION, envRegion);
         if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, envRegion);
-        localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
         
         updateTokenDisplay();
-        logMessage('SUCCESS', 'Credentials saved', `Region: ${envRegion}, Expires: ${new Date(tokenExpiry).toLocaleString()}`);
+        logMessage('SUCCESS', 'JLA credentials saved', `Expires: ${new Date(tokenExpiry).toLocaleString()}`);
         return true;
       } catch (e) {
         console.error('Failed to save credentials:', e);
-        logMessage('ERROR', 'Failed to save credentials', e.message);
         return false;
       }
     }
@@ -894,40 +827,33 @@
         localStorage.removeItem(STORAGE_KEYS.ENVIRONMENT);
         localStorage.removeItem(STORAGE_KEYS.ENV_REGION);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        // Keep SELECTED_REGION and CLIENT_ID
         
-        CURRENT_CONFIG = { 
-          environment: '', 
-          environmentRegion: '', 
-          token: null, 
-          tokenExpiry: null, 
-          refreshToken: null 
-        };
+        CURRENT_CONFIG.token = null;
+        CURRENT_CONFIG.tokenExpiry = null;
+        CURRENT_CONFIG.refreshToken = null;
         
         updateTokenDisplay();
-        logMessage('INFO', 'Credentials cleared');
+        logMessage('INFO', 'JLA credentials cleared');
       } catch (e) {
         console.error('Failed to clear credentials:', e);
       }
     }
 
     async function attemptTokenRefresh() {
-      if (!CURRENT_CONFIG.refreshToken || !CURRENT_CONFIG.environment || !CURRENT_CONFIG.environmentRegion) {
-        logMessage('DEBUG', 'Cannot refresh - missing refresh token or environment');
+      if (!CURRENT_CONFIG.refreshToken) {
         return false;
       }
       
       try {
-        const loginUrl = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.login;
-        if (!loginUrl) return false;
+        const loginUrl = ENVIRONMENTS[JLA_REGION].login;
 
-        logMessage('INFO', 'Attempting token refresh', `Region: ${CURRENT_CONFIG.environmentRegion}`);
+        logMessage('INFO', 'Attempting JLA token refresh');
 
         const response = await fetch(`${loginUrl}/oauth/token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': 'Basic ' + btoa(`${CLIENT_ID}:`)
+            'Authorization': 'Basic ' + btoa(`${JLA_CLIENT_ID}:`)
           },
           body: new URLSearchParams({
             grant_type: 'refresh_token',
@@ -938,17 +864,15 @@
         if (response.ok) {
           const data = await response.json();
           saveCredentials(data.access_token, data.expires_in, CURRENT_CONFIG.environment, 
-                         CURRENT_CONFIG.environmentRegion, data.refresh_token || CURRENT_CONFIG.refreshToken);
-          logMessage('SUCCESS', 'Token refreshed successfully');
+                         JLA_REGION, data.refresh_token || CURRENT_CONFIG.refreshToken);
+          logMessage('SUCCESS', 'JLA token refreshed');
           return true;
         } else {
-          const error = await response.text();
-          logMessage('ERROR', 'Token refresh failed', `Status: ${response.status}, Error: ${error}`);
+          logMessage('ERROR', 'JLA token refresh failed', `Status: ${response.status}`);
           return false;
         }
       } catch (error) {
-        console.warn('Token refresh failed:', error);
-        logMessage('ERROR', 'Token refresh exception', error.message);
+        logMessage('ERROR', 'JLA token refresh exception', error.message);
         return false;
       }
     }
@@ -958,7 +882,7 @@
       if (!hash) return {};
       
       const params = new URLSearchParams(hash);
-      const result = {
+      return {
         token: params.get('access_token'),
         refreshToken: params.get('refresh_token'),
         error: params.get('error'),
@@ -966,57 +890,26 @@
         expiresIn: params.get('expires_in'),
         state: params.get('state')
       };
-      
-      logMessage('DEBUG', 'Parsed token from hash', {
-        hasToken: !!result.token,
-        hasError: !!result.error,
-        expiresIn: result.expiresIn
-      });
-      
-      return result;
     }
 
     function parseEnvironmentFromState(state) {
-      if (!state) {
-        const stored = localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
-        logMessage('DEBUG', 'No state, using stored region', stored);
-        return stored;
-      }
-      try {
-        const stateObj = JSON.parse(atob(state));
-        return stateObj.env || localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
-      } catch (e) {
-        logMessage('WARN', 'Failed to parse state', e.message);
-        return localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
-      }
+      return JLA_REGION; // Always JLA region
     }
 
-    function authUrl(envRegion) {
-      const env = ENVIRONMENTS[envRegion];
-      if (!env) return null;
+    function authUrl() {
+      const env = ENVIRONMENTS[JLA_REGION];
       
       const state = btoa(JSON.stringify({ 
-        env: envRegion,
+        env: JLA_REGION,
         ts: Date.now(),
-        client: CLIENT_ID.substring(0,8)
+        client: 'JLA'
       }));
       
-      const url = `${env.login}/oauth/authorize?client_id=${encodeURIComponent(CLIENT_ID)}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
-      
-      logMessage('INFO', 'Generated auth URL', {
-        region: envRegion,
-        client: CLIENT_ID.substring(0,8),
-        loginUrl: env.login
-      });
-      
-      return url;
+      return `${env.login}/oauth/authorize?client_id=${encodeURIComponent(JLA_CLIENT_ID)}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
     }
 
     async function initAuth() {
       el.authContainer.style.display = 'block';
-      if (el.authDebugInfo) {
-        el.authDebugInfo.innerHTML = 'Checking for existing authentication...';
-      }
       
       const { token, refreshToken, error, errorDescription, expiresIn, state } = parseTokenFromHash();
       
@@ -1025,43 +918,21 @@
       }
 
       if (token) {
-        logMessage('INFO', 'Token found in URL', 'Processing authentication');
-        const envRegion = parseEnvironmentFromState(state);
-        const env = ENVIRONMENTS[envRegion];
+        logMessage('INFO', 'JLA token found in URL', 'Processing authentication');
         
-        if (env) {
-          el.regionSelect.value = envRegion;
-          
-          // Ensure we're using a client ID for this region
-          if (CLIENT_REGION_MAP[CLIENT_ID] !== envRegion) {
-            const defaultClient = REGION_DEFAULT_CLIENT[envRegion];
-            if (defaultClient) {
-              CLIENT_ID = defaultClient;
-              // Update dropdown
-              const options = Array.from(el.clientIdSelect.options);
-              for (let i = 0; i < options.length; i++) {
-                if (options[i].value === defaultClient) {
-                  options[i].selected = true;
-                  break;
-                }
-              }
-            }
-          }
-          
-          if (saveCredentials(token, expiresIn || '3600', env.api, envRegion, refreshToken)) {
-            logMessage('SUCCESS', 'Authentication successful', `Connected to ${env.name}`);
-            showStatusMessage('✅ Connected to Genesys Cloud', 'success');
-            showMainApp(env.name);
-            return;
-          }
+        if (saveCredentials(token, expiresIn || '3600', ENVIRONMENTS[JLA_REGION].api, JLA_REGION, refreshToken)) {
+          logMessage('SUCCESS', 'JLA authentication successful');
+          showStatusMessage('✅ Connected to JLA Group', 'success');
+          showMainApp();
+          return;
         }
       }
 
       if (error) {
-        logMessage('ERROR', 'Authentication failed', `${error}: ${errorDescription}`);
+        logMessage('ERROR', 'JLA authentication failed', `${error}: ${errorDescription}`);
         showStatusMessage(`❌ Authentication failed: ${error}`, 'error');
         if (el.authDebugInfo) {
-          el.authDebugInfo.innerHTML = `❌ Auth failed: ${error} - ${errorDescription}`;
+          el.authDebugInfo.innerHTML = `❌ Auth failed: ${error}`;
           el.btnForceAuth.style.display = 'block';
         }
         return;
@@ -1069,165 +940,77 @@
 
       const hasValidToken = loadStoredCredentials();
       if (hasValidToken) {
-        const envName = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.name || 'Genesys Cloud';
-        logMessage('SUCCESS', 'Auto-authentication successful', 'Using stored credentials');
-        if (el.authDebugInfo) {
-          el.authDebugInfo.innerHTML = '✅ Using stored credentials';
-        }
-        setTimeout(() => showMainApp(envName), 500);
+        logMessage('SUCCESS', 'Auto-authentication successful', 'Using stored JLA credentials');
+        setTimeout(() => showMainApp(), 500);
         return;
       }
 
       const refreshSuccess = await attemptTokenRefresh();
       if (refreshSuccess) {
-        const envName = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.name || 'Genesys Cloud';
-        logMessage('SUCCESS', 'Token refreshed', 'Auto-authentication successful');
-        if (el.authDebugInfo) {
-          el.authDebugInfo.innerHTML = '✅ Token refreshed';
-        }
-        setTimeout(() => showMainApp(envName), 500);
+        logMessage('SUCCESS', 'JLA token refreshed');
+        setTimeout(() => showMainApp(), 500);
         return;
       }
 
-      logMessage('INFO', 'No valid credentials found', 'Redirecting to authentication...');
-      if (el.authDebugInfo) {
-        el.authDebugInfo.innerHTML = '⏳ No valid credentials, redirecting to login...';
-      }
+      logMessage('INFO', 'No valid JLA credentials found', 'Redirecting to authentication...');
       setTimeout(() => authenticate(), 1500);
     }
 
     function authenticate() {
-      const envRegion = el.regionSelect.value;
-      const env = ENVIRONMENTS[envRegion];
-      
-      if (!env) {
-        logMessage('ERROR', 'Invalid environment selected');
-        return;
-      }
-      
-      // Save the selected region and client before redirect
-      localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, envRegion);
-      localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
-      
-      const authUrlValue = authUrl(envRegion);
-      if (authUrlValue) {
-        logMessage('INFO', 'Redirecting to authentication', `Region: ${env.name}, Client: ${CLIENT_ID.substring(0,8)}`);
-        window.location.href = authUrlValue;
-      } else {
-        logMessage('ERROR', 'Could not generate authentication URL');
-      }
+      const authUrlValue = authUrl();
+      logMessage('INFO', 'Redirecting to JLA authentication', `Client: JLA Group`);
+      window.location.href = authUrlValue;
     }
 
     function checkTokenExpiry() {
-      if (!CURRENT_CONFIG.token || !CURRENT_CONFIG.tokenExpiry) {
-        logMessage('DEBUG', 'No token to check expiry');
-        return false;
-      }
-      
-      const now = Date.now();
-      const expiresIn = CURRENT_CONFIG.tokenExpiry - now;
-      const expiresInMinutes = Math.floor(expiresIn / 1000 / 60);
-      
-      logMessage('DEBUG', 'Token expiry check', `Expires in ${expiresInMinutes} minutes`);
-      
-      if (expiresIn < 0) {
-        logMessage('WARN', 'Token expired');
-        return false;
-      }
-      
-      if (expiresIn < (5 * 60 * 1000)) {
-        logMessage('WARN', `Token expires in ${expiresInMinutes} minutes`);
-      }
-      
-      return expiresIn > 0;
+      if (!CURRENT_CONFIG.token || !CURRENT_CONFIG.tokenExpiry) return false;
+      return Date.now() < CURRENT_CONFIG.tokenExpiry - (5 * 60 * 1000);
     }
 
-    function showMainApp(environmentName) {
+    function showMainApp() {
       el.authContainer.style.display = 'none';
       el.mainContent.style.display = 'block';
-      el.envDisplay.value = environmentName || 'Genesys Cloud';
-      updateConnectionStatus(true, 'Connected ✓');
-      
-      if (CURRENT_CONFIG.environmentRegion) {
-        el.regionSelect.value = CURRENT_CONFIG.environmentRegion;
-      }
+      el.envDisplay.value = ENVIRONMENTS[JLA_REGION].name;
+      updateConnectionStatus(true, 'JLA Connected ✓');
       
       updateTokenDisplay();
       initializeApp();
     }
 
     function disconnect() {
-      if (confirm('Disconnect from Genesys Cloud? This will clear all stored credentials.')) {
+      if (confirm('Disconnect from JLA Group? This will clear all stored credentials.')) {
         clearCredentials();
         appState.userData = [];
         appState.rolesCache.clear();
         el.mainContent.style.display = 'none';
         el.authContainer.style.display = 'block';
         updateConnectionStatus(false, 'Not Connected');
-        logMessage('INFO', 'Disconnected from Genesys Cloud');
-        if (el.authDebugInfo) {
-          el.authDebugInfo.innerHTML = 'Disconnected. Ready to authenticate...';
-        }
+        logMessage('INFO', 'Disconnected from JLA Group');
       }
     }
 
     function reauthenticate() {
-      if (confirm('Re-authenticate? This will clear your current session.')) {
+      if (confirm('Reconnect to JLA Group? This will clear your current session.')) {
         clearCredentials();
         appState.userData = [];
         appState.rolesCache.clear();
         el.mainContent.style.display = 'none';
         el.authContainer.style.display = 'block';
         updateConnectionStatus(false, 'Not Connected');
-        if (el.authDebugInfo) {
-          el.authDebugInfo.innerHTML = 'Re-authenticating...';
-        }
         setTimeout(() => authenticate(), 500);
       }
     }
 
     function switchRegion() {
-      const selectedRegion = el.regionSelect.value;
-      const previousRegion = CURRENT_CONFIG.environmentRegion;
-      
-      if (selectedRegion === previousRegion) {
-        showStatusMessage('Already using this region', 'info');
-        return;
-      }
-      
-      if (confirm('Switch region? This will disconnect your current session and require a new login.')) {
-        localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, selectedRegion);
-        
-        // Set default client for the new region
-        const defaultClient = REGION_DEFAULT_CLIENT[selectedRegion];
-        if (defaultClient) {
-          CLIENT_ID = defaultClient;
-          localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
-          
-          // Update dropdown
-          const options = Array.from(el.clientIdSelect.options);
-          for (let i = 0; i < options.length; i++) {
-            if (options[i].value === defaultClient) {
-              options[i].selected = true;
-              break;
-            }
-          }
-        }
-        
+      // Always JLA region, just reconnect
+      if (confirm('Connect to JLA Group?')) {
         clearCredentials();
         appState.userData = [];
         appState.rolesCache.clear();
-        
         el.mainContent.style.display = 'none';
         el.authContainer.style.display = 'block';
         updateConnectionStatus(false, 'Not Connected');
-        
-        logMessage('INFO', 'Switched region', `Now using ${ENVIRONMENTS[selectedRegion]?.name}`);
-        showStatusMessage(`🔄 Switched to ${ENVIRONMENTS[selectedRegion]?.name}`, 'info');
-        setTimeout(() => authenticate(), 300);
-      } else {
-        // Revert dropdown if user cancels
-        el.regionSelect.value = previousRegion || 'eu-west-1';
+        setTimeout(() => authenticate(), 500);
       }
     }
 
@@ -1235,7 +1018,7 @@
       appState.isConnected = connected;
       if (connected) {
         el.statusIndicator.style.background = 'var(--success)';
-        el.statusText.textContent = message || 'Connected ✓';
+        el.statusText.textContent = message || 'JLA Connected ✓';
         el.statusText.style.color = 'var(--success)';
         el.btnFetchUsers.disabled = false;
       } else {
@@ -1250,19 +1033,18 @@
     // ==================== API FUNCTIONS ====================
     async function apiCall(path, options = {}) {
       if (!CURRENT_CONFIG.token) {
-        throw new Error('Not authenticated - no token found');
+        throw new Error('Not authenticated - please reconnect to JLA');
       }
       
       if (!checkTokenExpiry()) {
-        logMessage('WARN', 'Token expired, attempting refresh');
+        logMessage('WARN', 'JLA token expired, attempting refresh');
         const refreshSuccess = await attemptTokenRefresh();
         if (!refreshSuccess) {
-          throw new Error('Authentication token expired and refresh failed. Please reconnect.');
+          throw new Error('JLA token expired. Please reconnect.');
         }
       }
       
       const url = `${CURRENT_CONFIG.environment}${path}`;
-      logMessage('DEBUG', 'API Call', `${options.method || 'GET'} ${path}`);
       
       try {
         const response = await fetch(url, {
@@ -1275,13 +1057,10 @@
         });
 
         if (response.status === 401 || response.status === 403) {
-          logMessage('ERROR', `Authentication error ${response.status}`, `Path: ${path}`);
+          logMessage('ERROR', `JLA authentication error ${response.status}`);
           
-          // Try to refresh once more
           const refreshSuccess = await attemptTokenRefresh();
           if (refreshSuccess) {
-            logMessage('INFO', 'Token refreshed, retrying API call');
-            // Retry with new token
             const retryResponse = await fetch(url, {
               ...options,
               headers: {
@@ -1295,24 +1074,22 @@
             }
           }
           
-          throw new Error(`Authentication error (${response.status}). Please reconnect.`);
+          throw new Error('JLA authentication failed. Please reconnect.');
         }
         
         if (response.status === 429) {
           const retryAfter = response.headers.get('Retry-After') || 5;
-          logMessage('WARN', `Rate limit exceeded`, `Retrying after ${retryAfter} seconds`);
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           return apiCall(path, options);
         }
         
         if (!response.ok) {
-          const errorText = await response.text().catch(() => '');
-          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+          throw new Error(`API Error: ${response.status}`);
         }
         
         return response.json();
       } catch (error) {
-        logMessage('ERROR', 'API call failed', `${path}: ${error.message}`);
+        logMessage('ERROR', 'JLA API call failed', error.message);
         throw error;
       }
     }
@@ -1321,13 +1098,13 @@
       if (!roles || !Array.isArray(roles)) return 'other';
       const roleNames = roles.map(r => r.name.toLowerCase());
       
-      const adminKeywords = ['admin', 'administrator', 'system administrator', 'org admin'];
+      const adminKeywords = ['admin', 'administrator', 'system administrator'];
       if (roleNames.some(role => adminKeywords.some(keyword => role.includes(keyword)))) return 'admin';
       
-      const supervisorKeywords = ['supervisor', 'team lead', 'manager', 'director', 'lead'];
+      const supervisorKeywords = ['supervisor', 'team lead', 'manager', 'director'];
       if (roleNames.some(role => supervisorKeywords.some(keyword => role.includes(keyword)))) return 'supervisor';
       
-      const agentKeywords = ['agent', 'user', 'employee', 'representative', 'customer service'];
+      const agentKeywords = ['agent', 'user', 'employee', 'representative'];
       if (roleNames.some(role => agentKeywords.some(keyword => role.includes(keyword)))) return 'agent';
       
       return 'other';
@@ -1350,30 +1127,23 @@
 
     function logMessage(level, message, details = '') {
       const timestamp = new Date().toLocaleTimeString();
-      const logEntry = { timestamp, level, message, details: typeof details === 'object' ? JSON.stringify(details) : details };
+      const logEntry = { timestamp, level, message, details };
       appState.logs.unshift(logEntry);
       
       const row = document.createElement('tr');
-      const levelIcon = level === 'ERROR' ? '🔴' : level === 'WARN' ? '🟡' : level === 'SUCCESS' ? '✅' : level === 'DEBUG' ? '🔍' : '🔵';
+      const levelIcon = level === 'ERROR' ? '🔴' : level === 'WARN' ? '🟡' : level === 'SUCCESS' ? '✅' : '🔵';
       
-      let detailsDisplay = typeof details === 'object' ? JSON.stringify(details).substring(0, 100) : String(details).substring(0, 100);
-      if (detailsDisplay.length >= 100) detailsDisplay += '...';
+      row.innerHTML = `<td>${timestamp}</td><td>${levelIcon} ${level}</td><td>${message}</td><td>${details}</td>`;
       
-      row.innerHTML = `<td>${timestamp}</td><td>${levelIcon} ${level}</td><td>${message}</td><td>${detailsDisplay}</td>`;
-      
-      if (el.logsTableBody.children[0]?.innerHTML.includes('System initialised')) {
+      if (el.logsTableBody.children[0]?.innerHTML.includes('JLA Manager initialised')) {
         el.logsTableBody.innerHTML = '';
       }
       el.logsTableBody.prepend(row);
       
-      if (el.logsTableBody.children.length > 100) {
-        el.logsTableBody.removeChild(el.logsTableBody.lastChild);
-      }
-      
       if (level === 'ERROR' || level === 'SUCCESS' || level === 'WARN') {
         showStatusMessage(message, level.toLowerCase());
       }
-      console.log(`[${level}] ${message}`, details);
+      console.log(`[JLA][${level}] ${message}`, details);
     }
 
     function showStatusMessage(message, type = 'info') {
@@ -1387,22 +1157,16 @@
       
       el.statusContainer.appendChild(msgDiv);
       
-      setTimeout(() => {
-        if (msgDiv.parentNode) {
-          msgDiv.style.opacity = '0';
-          msgDiv.style.transform = 'translateX(100%)';
-          setTimeout(() => msgDiv.remove(), 300);
-        }
-      }, 5000);
+      setTimeout(() => msgDiv.remove(), 5000);
     }
 
     async function fetchUserData() {
       if (!appState.isConnected) {
-        showStatusMessage('Please connect first', 'warn');
+        showStatusMessage('Please connect to JLA first', 'warn');
         return;
       }
 
-      setLoading(true, 'Loading Users', 'Fetching user list from Genesys Cloud...');
+      setLoading(true, 'Loading JLA Users', 'Fetching user list from Genesys Cloud...');
       updateLoadingProgress(10);
 
       try {
@@ -1410,17 +1174,12 @@
         let page = 1;
         const pageSize = 100;
 
-        logMessage('INFO', 'Starting user fetch', `Region: ${CURRENT_CONFIG.environmentRegion}`);
-
         while (true) {
           updateLoadingProgress(10 + (page * 5));
           
-          logMessage('DEBUG', `Fetching page ${page}`);
           const usersData = await apiCall(`/api/v2/users?pageSize=${pageSize}&pageNumber=${page}&expand=dateLastLogin,authorization,groups`);
           const users = usersData?.entities || [];
           allUsers = allUsers.concat(users);
-          
-          logMessage('INFO', `Fetched page ${page}`, `${users.length} users (total: ${allUsers.length})`);
           
           if (!usersData?.nextUri || users.length < pageSize) break;
           page++;
@@ -1428,7 +1187,6 @@
         }
 
         updateLoadingProgress(70);
-        logMessage('SUCCESS', `Loaded ${allUsers.length} users total`);
 
         appState.userData = allUsers.map(user => {
           const teamName = user.groups && user.groups.length > 0 
@@ -1465,34 +1223,25 @@
         el.btnExportUsers.disabled = false;
         el.lastUpdated.textContent = new Date().toLocaleString();
         
-        logMessage('SUCCESS', 'User data loaded successfully', `${appState.userData.length} users`);
-        showStatusMessage(`✅ Loaded ${appState.userData.length} users`, 'success');
+        logMessage('SUCCESS', 'JLA user data loaded', `${appState.userData.length} users`);
+        showStatusMessage(`✅ Loaded ${appState.userData.length} JLA users`, 'success');
 
       } catch (error) {
         setLoading(false);
-        logMessage('ERROR', 'Failed to fetch users', error.message);
-        showStatusMessage('❌ Failed to fetch user data', 'error');
-        
-        // If it's an auth error, show reconnect option
-        if (error.message.includes('Authentication') || error.message.includes('401')) {
-          if (confirm('Authentication failed. Would you like to reconnect?')) {
-            reauthenticate();
-          }
-        }
+        logMessage('ERROR', 'Failed to fetch JLA users', error.message);
+        showStatusMessage('❌ Failed to fetch JLA user data', 'error');
       }
     }
 
     function updateStats() {
       const users = appState.userData;
       
-      // Basic counts
       el.statTotalUsers.textContent = users.length;
       el.totalCount.textContent = users.length;
       
       const usersWithLogin = users.filter(u => u.lastLogin).length;
       el.statActiveUsers.textContent = usersWithLogin;
       
-      // Role type counts
       const agents = users.filter(u => u.userType === 'agent').length;
       const supervisors = users.filter(u => u.userType === 'supervisor').length;
       const admins = users.filter(u => u.userType === 'admin').length;
@@ -1503,7 +1252,6 @@
       el.statAdmins.textContent = admins;
       el.statOthers.textContent = others;
       
-      // Role analysis
       const roleFrequency = new Map();
       let totalRoles = 0;
       let multiRoleCount = 0;
@@ -1522,20 +1270,15 @@
       appState.rolesCache = roleFrequency;
       
       el.statUniqueRoles.textContent = roleFrequency.size;
-      el.statAvgRoles.textContent = users.length > 0 
-        ? (totalRoles / users.length).toFixed(1) 
-        : '0';
+      el.statAvgRoles.textContent = users.length > 0 ? (totalRoles / users.length).toFixed(1) : '0';
       el.statMultiRole.textContent = multiRoleCount;
       
-      // Summary text
-      const pctWithLogin = users.length > 0 
-        ? Math.round((usersWithLogin / users.length) * 100) 
-        : 0;
+      const pctWithLogin = users.length > 0 ? Math.round((usersWithLogin / users.length) * 100) : 0;
       
       el.totalRolesSummary.innerHTML = `
-        <span title="Users who have ever logged in">📊 ${usersWithLogin} users with login (${pctWithLogin}%)</span><br>
-        <span title="Total roles assigned across all users">🔑 ${totalRoles} total role assignments</span><br>
-        <span title="Users with multiple roles">👥 ${multiRoleCount} users have 2+ roles</span>
+        📊 ${usersWithLogin} users with login (${pctWithLogin}%)<br>
+        🔑 ${totalRoles} total role assignments<br>
+        👥 ${multiRoleCount} users have 2+ roles
       `;
     }
 
@@ -1548,7 +1291,6 @@
       
       let usersToDisplay = [...appState.userData];
 
-      // Apply filters
       if (filterValue !== 'all') {
         if (filterValue === 'agent') usersToDisplay = usersToDisplay.filter(u => u.userType === 'agent');
         else if (filterValue === 'supervisor') usersToDisplay = usersToDisplay.filter(u => u.userType === 'supervisor');
@@ -1558,7 +1300,6 @@
         else if (filterValue === 'noLogin') usersToDisplay = usersToDisplay.filter(u => !u.lastLogin);
       }
 
-      // Apply search
       if (searchTerm) {
         usersToDisplay = usersToDisplay.filter(user =>
           (user.name && user.name.toLowerCase().includes(searchTerm)) ||
@@ -1573,60 +1314,38 @@
       if (usersToDisplay.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `<td colspan="7" style="text-align:center;padding:48px;color:var(--text-light);">
-          ${appState.userData.length === 0 ? 'No data loaded. Click "Load Users" to fetch data.' : 'No users match your search/filter.'}
+          No JLA users match your search
         </td>`;
         tbody.appendChild(row);
         return;
       }
 
-      usersToDisplay.slice(0, 500).forEach(user => { // Limit to 500 rows for performance
+      usersToDisplay.slice(0, 500).forEach(user => {
         const row = document.createElement('tr');
         
         let roleTypeBadge = '';
         switch(user.userType) {
-          case 'agent':
-            roleTypeBadge = `<span class="status-badge role-agent">Agent</span>`;
-            break;
-          case 'supervisor':
-            roleTypeBadge = `<span class="status-badge role-supervisor">Supervisor</span>`;
-            break;
-          case 'admin':
-            roleTypeBadge = `<span class="status-badge role-admin">Admin</span>`;
-            break;
-          default:
-            roleTypeBadge = `<span class="status-badge role-other">Other</span>`;
+          case 'agent': roleTypeBadge = `<span class="status-badge role-agent">Agent</span>`; break;
+          case 'supervisor': roleTypeBadge = `<span class="status-badge role-supervisor">Supervisor</span>`; break;
+          case 'admin': roleTypeBadge = `<span class="status-badge role-admin">Admin</span>`; break;
+          default: roleTypeBadge = `<span class="status-badge role-other">Other</span>`;
         }
 
         const rolesDisplay = user.roles && user.roles.length > 0
           ? user.roles.slice(0, 2).join(', ') + (user.roles.length > 2 ? ` +${user.roles.length-2}` : '')
           : 'No roles';
 
-        const loginClass = user.loginStatusClass;
-        const loginDisplay = user.lastLoginDisplay || 'Never';
-
         row.innerHTML = `
           <td><strong>${user.name}</strong></td>
           <td>${user.email}</td>
           <td style="font-size:13px;">${user.team}</td>
           <td>${roleTypeBadge}</td>
-          <td>
-            <span title="${user.roles ? user.roles.join('\n') : 'No roles'}">
-              ${rolesDisplay}
-            </span>
-          </td>
-          <td><span class="last-login-status ${loginClass}">${loginDisplay}</span></td>
+          <td><span title="${user.roles ? user.roles.join('\n') : ''}">${rolesDisplay}</span></td>
+          <td><span class="last-login-status ${user.loginStatusClass}">${user.lastLoginDisplay}</span></td>
           <td><span class="status-badge" style="background:rgba(99,171,143,0.1);">${user.state}</span></td>
         `;
         tbody.appendChild(row);
       });
-      
-      if (usersToDisplay.length > 500) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="7" style="text-align:center;padding:12px;background:var(--filter-bg);">
-          Showing first 500 of ${usersToDisplay.length} users. Refine search to see more.
-        </td>`;
-        tbody.appendChild(row);
-      }
     }
 
     function renderRolesTable() {
@@ -1635,7 +1354,7 @@
       
       if (appState.rolesCache.size === 0) {
         const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="4" style="text-align:center;padding:48px;">Load users to see role data</td>`;
+        row.innerHTML = `<td colspan="4" style="text-align:center;padding:48px;">Load JLA users to see role data</td>`;
         tbody.appendChild(row);
         return;
       }
@@ -1648,7 +1367,6 @@
         const percentage = ((count / totalUsers) * 100).toFixed(1);
         const row = document.createElement('tr');
         
-        // Find sample users with this role
         const sampleUsers = appState.userData
           .filter(u => u.roles && u.roles.includes(roleName))
           .slice(0, 3)
@@ -1663,43 +1381,23 @@
         `;
         tbody.appendChild(row);
       });
-
-      if (sortedRoles.length > 200) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="4" style="text-align:center;padding:8px;background:var(--filter-bg);">
-          Showing first 200 of ${sortedRoles.length} roles
-        </td>`;
-        tbody.appendChild(row);
-      }
-
-      // Add summary row
-      const summaryRow = document.createElement('tr');
-      summaryRow.style.backgroundColor = 'var(--filter-bg)';
-      summaryRow.innerHTML = `
-        <td><strong>TOTAL</strong></td>
-        <td style="text-align:center;"><strong>${sortedRoles.reduce((sum, [_, count]) => sum + count, 0)}</strong></td>
-        <td colspan="2" style="text-align:center;font-size:13px;">Total role assignments</td>
-      `;
-      tbody.appendChild(summaryRow);
     }
 
     function exportUsers() {
       if (!appState.userData || appState.userData.length === 0) {
-        showStatusMessage('No user data to export', 'warn');
+        showStatusMessage('No JLA user data to export', 'warn');
         return;
       }
 
-      let csv = 'Genesys Cloud User Export\n';
+      let csv = 'JLA Group User Export\n';
       csv += `Generated: ${new Date().toLocaleString()}\n`;
       csv += `Total Users: ${appState.userData.length}\n\n`;
-
       csv += 'Name,Email,Team,User Type,Roles,Last Login,State\n';
 
       appState.userData.forEach(user => {
         const roles = user.roles ? user.roles.join('; ') : '';
         const lastLogin = user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never';
-        
-        csv += `"${user.name || ''}","${user.email || ''}","${user.team || ''}","${user.userType || ''}","${roles}","${lastLogin}","${user.state || 'active'}"\n`;
+        csv += `"${user.name}","${user.email}","${user.team}","${user.userType}","${roles}","${lastLogin}","${user.state}"\n`;
       });
 
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1708,54 +1406,30 @@
       const dateStr = new Date().toISOString().split('T')[0];
       
       a.href = url;
-      a.download = `genesys_users_${dateStr}.csv`;
+      a.download = `jla_users_${dateStr}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      logMessage('SUCCESS', 'Users exported', `${appState.userData.length} users exported`);
-      showStatusMessage(`✅ Exported ${appState.userData.length} users to CSV`, 'success');
+      logMessage('SUCCESS', 'JLA users exported', `${appState.userData.length} users`);
     }
 
     function resetApplication() {
-      if (confirm('Reset the application? This will clear all user data but keep the connection.')) {
+      if (confirm('Reset JLA session? This will clear all user data.')) {
         appState.userData = [];
         appState.rolesCache.clear();
-        
-        el.statTotalUsers.textContent = '0';
-        el.statActiveUsers.textContent = '0';
-        el.statAgents.textContent = '0';
-        el.statSupervisors.textContent = '0';
-        el.statAdmins.textContent = '0';
-        el.statOthers.textContent = '0';
-        el.statUniqueRoles.textContent = '0';
-        el.statAvgRoles.textContent = '0';
-        el.statMultiRole.textContent = '0';
-        el.totalCount.textContent = '0';
-        el.visibleCount.textContent = '0';
-        el.totalRolesSummary.innerHTML = 'No data loaded';
+        updateStats();
+        renderUserTable();
+        renderRolesTable();
         el.btnExportUsers.disabled = true;
-        
-        el.usersTableBody.innerHTML = `
-          <tr><td colspan="7" style="text-align:center;padding:48px;color:var(--text-light);">
-            Click "Load Users" to fetch data
-          </td></tr>
-        `;
-        
-        el.rolesTableBody.innerHTML = `
-          <tr><td colspan="4" style="text-align:center;padding:48px;">Load users to see role data</td></tr>
-        `;
-        
-        logMessage('INFO', 'Application reset', 'All user data cleared');
-        showStatusMessage('🔄 Application reset', 'info');
+        logMessage('INFO', 'JLA session reset');
       }
     }
 
     function initializeApp() {
-      logMessage('INFO', 'User Manager initialised', `Region: ${el.regionSelect.value}, Client: ${CLIENT_ID.substring(0,8)}`);
+      logMessage('INFO', 'JLA Manager initialised');
       
-      // Set up event listeners
       el.btnDisconnect.addEventListener('click', disconnect);
       el.btnReauth.addEventListener('click', reauthenticate);
       el.btnSwitchRegion.addEventListener('click', switchRegion);
@@ -1770,15 +1444,11 @@
       el.userSearch.addEventListener('input', renderUserTable);
       el.userFilter.addEventListener('change', renderUserTable);
 
-      // Tab switching
       document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() {
           const tabId = this.dataset.tab;
-          appState.currentTab = tabId;
-          
           document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
           this.classList.add('active');
-          
           document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
             if (content.id === `tab-${tabId}`) content.classList.add('active');
@@ -1786,7 +1456,6 @@
         });
       });
 
-      // Log management
       el.btnClearLogs.addEventListener('click', () => {
         el.logsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;">Logs cleared</td></tr>';
         appState.logs = [];
@@ -1794,51 +1463,12 @@
 
       el.btnCopyLogs.addEventListener('click', () => {
         const logText = appState.logs.map(log =>
-          `${log.timestamp} [${log.level}] ${log.message} ${log.details ? '- ' + log.details : ''}`
+          `${log.timestamp} [${log.level}] ${log.message} ${log.details}`
         ).join('\n');
-        navigator.clipboard.writeText(logText).then(() => 
-          showStatusMessage('Logs copied to clipboard', 'success')
-        );
+        navigator.clipboard.writeText(logText);
       });
-
-      // Client ID change handler
-      el.clientIdSelect.addEventListener('change', () => {
-        const newClientId = el.clientIdSelect.value;
-        if (newClientId !== CLIENT_ID) {
-          CLIENT_ID = newClientId;
-          logMessage('INFO', 'Client ID changed', CLIENT_ID.substring(0,8));
-          
-          // Check region compatibility
-          const clientRegion = CLIENT_REGION_MAP[CLIENT_ID];
-          const selectedRegion = el.regionSelect.value;
-          
-          if (clientRegion && clientRegion !== selectedRegion) {
-            el.regionWarning.classList.add('active');
-            el.regionWarning.innerHTML = `⚠️ Warning: This client ID was created for ${ENVIRONMENTS[clientRegion]?.name} but you have ${ENVIRONMENTS[selectedRegion]?.name} selected.`;
-          } else {
-            el.regionWarning.classList.remove('active');
-          }
-        }
-      });
-
-      // Initial region check
-      const checkClientRegionMatch = () => {
-        const selectedRegion = el.regionSelect.value;
-        const clientRegion = CLIENT_REGION_MAP[CLIENT_ID];
-        
-        if (clientRegion && clientRegion !== selectedRegion) {
-          el.regionWarning.classList.add('active');
-          el.regionWarning.innerHTML = `⚠️ Warning: This client ID was created for ${ENVIRONMENTS[clientRegion]?.name} but you have ${ENVIRONMENTS[selectedRegion]?.name} selected.`;
-        } else {
-          el.regionWarning.classList.remove('active');
-        }
-      };
-
-      el.regionSelect.addEventListener('change', checkClientRegionMatch);
-      checkClientRegionMatch();
     }
 
-    // Start the application
     document.addEventListener('DOMContentLoaded', initAuth);
   </script>
 </body>
