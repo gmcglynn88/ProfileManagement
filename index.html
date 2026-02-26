@@ -81,6 +81,8 @@
     .btn-secondary{background:var(--text-light)}.btn-secondary:hover{background:#5a6268}
     .btn-export{background:var(--info)}.btn-export:hover{background:#138496}
     .btn-refresh{background:var(--primary-color);width:auto;padding:12px 20px;}
+    .btn-auth{background:var(--warning);color:var(--text-color);}
+    .btn-auth:hover{background:#e0a800;}
 
     .region-selector {
       display: flex;
@@ -109,6 +111,35 @@
     
     .client-warning.active {
       display: block;
+    }
+
+    .token-info {
+      background: rgba(99, 171, 143, 0.05);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 16px;
+      font-size: 12px;
+      word-break: break-all;
+      border: 1px solid var(--border-color);
+      display: none;
+    }
+    
+    .token-info.active {
+      display: block;
+    }
+    
+    .token-label {
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 4px;
+    }
+    
+    .token-value {
+      font-family: monospace;
+      background: white;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid var(--border-color);
     }
 
     .status-container{
@@ -285,10 +316,12 @@
 
     .action-buttons{
       display:flex;gap:12px;margin-top:24px;
+      flex-wrap:wrap;
     }
 
     .action-buttons button{
       flex:1;
+      min-width:120px;
     }
 
     @media(max-width:768px){
@@ -308,6 +341,21 @@
       cursor:help;
       border-bottom:1px dotted var(--text-light);
     }
+
+    .debug-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 16px;
+    }
+    
+    .debug-toggle {
+      background: var(--text-light);
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+      width: auto;
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
@@ -318,7 +366,9 @@
         <div class="auto-auth-message" style="text-align:center;padding:30px;">
           <div class="spinner" style="width:40px;height:40px;border-width:3px;margin:0 auto;"></div>
           <p style="margin-top:20px;font-size:15px;color:var(--text-light);">Attempting automatic authentication...</p>
+          <p style="font-size:13px;color:var(--text-light);" id="authDebugInfo"></p>
         </div>
+        <button id="btnForceAuth" class="btn btn-auth btn-block" style="display:none;">🔑 Force Authentication</button>
       </div>
     </div>
   </div>
@@ -346,6 +396,20 @@
             </div>
             
             <div class="form-group">
+              <label>Client ID</label>
+              <select id="clientIdSelect">
+                <optgroup label="🇮🇪 Dublin Clients">
+                  <option value="fe305808-b368-4547-8af9-325d28d552bb">IPIDEV (Dublin)</option>
+                </optgroup>
+                <optgroup label="🇬🇧 London Clients">
+                  <option value="d968eca4-cdb7-4b90-91b1-4628b5bb679e">Group CX3 (London)</option>
+                  <option value="a236ffec-2893-4ccd-81bb-ef2f4a2fe316">Group CX1 (London)</option>
+                  <option value="cd8f1ea1-d322-4b0c-9d0c-bc9aecd13aad">JLA Group (London)</option>
+                </optgroup>
+              </select>
+            </div>
+            
+            <div class="form-group">
               <label>Environment</label>
               <input type="text" id="envDisplay" value="Select environment..." readonly style="background:var(--filter-bg);">
             </div>
@@ -361,10 +425,22 @@
             <div id="regionWarning" class="client-warning">
               ⚠️ Warning: Client ID may not work in the selected region.
             </div>
+
+            <div id="tokenInfo" class="token-info">
+              <div class="token-label">🔑 Token Status</div>
+              <div id="tokenStatus">No token</div>
+              <div id="tokenExpiry"></div>
+              <div class="token-value" id="tokenPreview"></div>
+            </div>
             
-            <button id="btnDisconnect" class="btn" style="margin-top:15px;background:var(--danger);">
-              <span>🚪 Disconnect</span>
-            </button>
+            <div class="action-buttons">
+              <button id="btnDisconnect" style="background:var(--danger);flex:1;">
+                <span>🚪 Disconnect</span>
+              </button>
+              <button id="btnReauth" style="background:var(--warning);color:var(--text-color);flex:1;">
+                <span>🔄 Re-authenticate</span>
+              </button>
+            </div>
           </div>
 
           <div class="card">
@@ -408,11 +484,11 @@
           <div class="card">
             <h2>⚡ Actions</h2>
             <div class="action-buttons">
-              <button id="btnFetchUsers" class="btn btn-success btn-block">
+              <button id="btnFetchUsers" class="btn btn-success" style="flex:2;" disabled>
                 <span>🔄 Load Users</span>
               </button>
-              <button id="btnExportUsers" class="btn btn-export btn-block" disabled>
-                <span>📥 Export CSV</span>
+              <button id="btnExportUsers" class="btn btn-export" style="flex:1;" disabled>
+                <span>📥 Export</span>
               </button>
             </div>
             <div style="height:12px;"></div>
@@ -582,7 +658,9 @@
     
     let CLIENT_ID = CLIENT_IDS.dublin_ipidev;
     
+    // IMPORTANT: Update this to your new app's URL
     const REDIRECT_URI = 'https://gmcglynn88.github.io/Hourly_Billing/'; // Update this for your new app
+    
     const ENVIRONMENTS = {
       'eu-west-1': { 
         name: '🇮🇪 Dublin - mypurecloud.ie', 
@@ -633,18 +711,26 @@
       loadingProgressFill: document.getElementById('loadingProgressFill'),
       
       btnDisconnect: document.getElementById('btnDisconnect'),
+      btnReauth: document.getElementById('btnReauth'),
       btnSwitchRegion: document.getElementById('btnSwitchRegion'),
       btnFetchUsers: document.getElementById('btnFetchUsers'),
       btnExportUsers: document.getElementById('btnExportUsers'),
       btnReset: document.getElementById('btnReset'),
       btnClearLogs: document.getElementById('btnClearLogs'),
       btnCopyLogs: document.getElementById('btnCopyLogs'),
+      btnForceAuth: document.getElementById('btnForceAuth'),
       
       regionSelect: document.getElementById('regionSelect'),
+      clientIdSelect: document.getElementById('clientIdSelect'),
       regionWarning: document.getElementById('regionWarning'),
       envDisplay: document.getElementById('envDisplay'),
       statusIndicator: document.getElementById('statusIndicator'),
       statusText: document.getElementById('statusText'),
+      tokenInfo: document.getElementById('tokenInfo'),
+      tokenStatus: document.getElementById('tokenStatus'),
+      tokenExpiry: document.getElementById('tokenExpiry'),
+      tokenPreview: document.getElementById('tokenPreview'),
+      authDebugInfo: document.getElementById('authDebugInfo'),
       
       statTotalUsers: document.getElementById('statTotalUsers'),
       statActiveUsers: document.getElementById('statActiveUsers'),
@@ -697,6 +783,23 @@
       return 'login-never';
     }
 
+    function updateTokenDisplay() {
+      if (CURRENT_CONFIG.token) {
+        el.tokenInfo.classList.add('active');
+        const expiryDate = new Date(CURRENT_CONFIG.tokenExpiry);
+        const now = new Date();
+        const expiresIn = Math.floor((CURRENT_CONFIG.tokenExpiry - now) / 1000 / 60);
+        
+        el.tokenStatus.innerHTML = expiresIn > 0 
+          ? `✅ Valid (expires in ${expiresIn} minutes)` 
+          : `❌ Expired`;
+        el.tokenExpiry.innerHTML = `Expires: ${expiryDate.toLocaleString()}`;
+        el.tokenPreview.innerHTML = CURRENT_CONFIG.token.substring(0, 20) + '...';
+      } else {
+        el.tokenInfo.classList.remove('active');
+      }
+    }
+
     // ==================== AUTHENTICATION ====================
     function loadStoredCredentials() {
       try {
@@ -708,6 +811,13 @@
         const storedClientId = localStorage.getItem(STORAGE_KEYS.CLIENT_ID);
         const storedRegion = localStorage.getItem(STORAGE_KEYS.SELECTED_REGION);
 
+        logMessage('DEBUG', 'Loading stored credentials', {
+          hasToken: !!token,
+          envRegion,
+          storedRegion,
+          storedClientId: storedClientId?.substring(0,8)
+        });
+
         if (storedRegion) {
           const options = Array.from(el.regionSelect.options);
           if (options.some(opt => opt.value === storedRegion)) {
@@ -716,9 +826,13 @@
         }
 
         if (storedClientId) {
-          const clientRegion = CLIENT_REGION_MAP[storedClientId];
-          if (!storedRegion || clientRegion === storedRegion) {
-            CLIENT_ID = storedClientId;
+          CLIENT_ID = storedClientId;
+          const options = Array.from(el.clientIdSelect.options);
+          for (let i = 0; i < options.length; i++) {
+            if (options[i].value === storedClientId) {
+              options[i].selected = true;
+              break;
+            }
           }
         }
 
@@ -731,14 +845,21 @@
             refreshToken
           };
 
+          // Check if token is still valid
           if (Date.now() < CURRENT_CONFIG.tokenExpiry - (5 * 60 * 1000)) {
             if (!storedRegion || envRegion === storedRegion) {
+              logMessage('SUCCESS', 'Valid stored token found', `Expires: ${new Date(parseInt(tokenExpiry, 10)).toLocaleString()}`);
               return true;
+            } else {
+              logMessage('WARN', 'Token region mismatch', `Token: ${envRegion}, Selected: ${storedRegion}`);
             }
+          } else {
+            logMessage('WARN', 'Stored token expired', `Expired: ${new Date(parseInt(tokenExpiry, 10)).toLocaleString()}`);
           }
         }
       } catch (e) {
         console.warn('Failed to load stored credentials:', e);
+        logMessage('ERROR', 'Failed to load credentials', e.message);
       }
       return false;
     }
@@ -747,6 +868,7 @@
       try {
         const tokenExpiry = Date.now() + (parseInt(expiresIn, 10) * 1000);
         CURRENT_CONFIG = { token, tokenExpiry, environment, environmentRegion: envRegion, refreshToken };
+        
         localStorage.setItem(STORAGE_KEYS.TOKEN, token);
         localStorage.setItem(STORAGE_KEYS.TOKEN_EXPIRY, tokenExpiry.toString());
         localStorage.setItem(STORAGE_KEYS.ENVIRONMENT, environment);
@@ -754,9 +876,13 @@
         if (refreshToken) localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refreshToken);
         localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, envRegion);
         localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
+        
+        updateTokenDisplay();
+        logMessage('SUCCESS', 'Credentials saved', `Region: ${envRegion}, Expires: ${new Date(tokenExpiry).toLocaleString()}`);
         return true;
       } catch (e) {
         console.error('Failed to save credentials:', e);
+        logMessage('ERROR', 'Failed to save credentials', e.message);
         return false;
       }
     }
@@ -768,17 +894,34 @@
         localStorage.removeItem(STORAGE_KEYS.ENVIRONMENT);
         localStorage.removeItem(STORAGE_KEYS.ENV_REGION);
         localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
-        CURRENT_CONFIG = { environment: '', environmentRegion: '', token: null, tokenExpiry: null, refreshToken: null };
+        // Keep SELECTED_REGION and CLIENT_ID
+        
+        CURRENT_CONFIG = { 
+          environment: '', 
+          environmentRegion: '', 
+          token: null, 
+          tokenExpiry: null, 
+          refreshToken: null 
+        };
+        
+        updateTokenDisplay();
+        logMessage('INFO', 'Credentials cleared');
       } catch (e) {
         console.error('Failed to clear credentials:', e);
       }
     }
 
     async function attemptTokenRefresh() {
-      if (!CURRENT_CONFIG.refreshToken || !CURRENT_CONFIG.environment || !CURRENT_CONFIG.environmentRegion) return false;
+      if (!CURRENT_CONFIG.refreshToken || !CURRENT_CONFIG.environment || !CURRENT_CONFIG.environmentRegion) {
+        logMessage('DEBUG', 'Cannot refresh - missing refresh token or environment');
+        return false;
+      }
+      
       try {
         const loginUrl = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.login;
         if (!loginUrl) return false;
+
+        logMessage('INFO', 'Attempting token refresh', `Region: ${CURRENT_CONFIG.environmentRegion}`);
 
         const response = await fetch(`${loginUrl}/oauth/token`, {
           method: 'POST',
@@ -798,18 +941,24 @@
                          CURRENT_CONFIG.environmentRegion, data.refresh_token || CURRENT_CONFIG.refreshToken);
           logMessage('SUCCESS', 'Token refreshed successfully');
           return true;
+        } else {
+          const error = await response.text();
+          logMessage('ERROR', 'Token refresh failed', `Status: ${response.status}, Error: ${error}`);
+          return false;
         }
       } catch (error) {
         console.warn('Token refresh failed:', error);
+        logMessage('ERROR', 'Token refresh exception', error.message);
+        return false;
       }
-      return false;
     }
 
     function parseTokenFromHash() {
       const hash = window.location.hash.replace(/^#/, '');
       if (!hash) return {};
+      
       const params = new URLSearchParams(hash);
-      return {
+      const result = {
         token: params.get('access_token'),
         refreshToken: params.get('refresh_token'),
         error: params.get('error'),
@@ -817,14 +966,27 @@
         expiresIn: params.get('expires_in'),
         state: params.get('state')
       };
+      
+      logMessage('DEBUG', 'Parsed token from hash', {
+        hasToken: !!result.token,
+        hasError: !!result.error,
+        expiresIn: result.expiresIn
+      });
+      
+      return result;
     }
 
     function parseEnvironmentFromState(state) {
-      if (!state) return localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
+      if (!state) {
+        const stored = localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
+        logMessage('DEBUG', 'No state, using stored region', stored);
+        return stored;
+      }
       try {
         const stateObj = JSON.parse(atob(state));
         return stateObj.env || localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
       } catch (e) {
+        logMessage('WARN', 'Failed to parse state', e.message);
         return localStorage.getItem(STORAGE_KEYS.SELECTED_REGION) || 'eu-west-1';
       }
     }
@@ -835,14 +997,26 @@
       
       const state = btoa(JSON.stringify({ 
         env: envRegion,
-        ts: Date.now()
+        ts: Date.now(),
+        client: CLIENT_ID.substring(0,8)
       }));
       
-      return `${env.login}/oauth/authorize?client_id=${encodeURIComponent(CLIENT_ID)}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
+      const url = `${env.login}/oauth/authorize?client_id=${encodeURIComponent(CLIENT_ID)}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&state=${encodeURIComponent(state)}`;
+      
+      logMessage('INFO', 'Generated auth URL', {
+        region: envRegion,
+        client: CLIENT_ID.substring(0,8),
+        loginUrl: env.login
+      });
+      
+      return url;
     }
 
     async function initAuth() {
       el.authContainer.style.display = 'block';
+      if (el.authDebugInfo) {
+        el.authDebugInfo.innerHTML = 'Checking for existing authentication...';
+      }
       
       const { token, refreshToken, error, errorDescription, expiresIn, state } = parseTokenFromHash();
       
@@ -851,15 +1025,26 @@
       }
 
       if (token) {
+        logMessage('INFO', 'Token found in URL', 'Processing authentication');
         const envRegion = parseEnvironmentFromState(state);
         const env = ENVIRONMENTS[envRegion];
+        
         if (env) {
           el.regionSelect.value = envRegion;
           
+          // Ensure we're using a client ID for this region
           if (CLIENT_REGION_MAP[CLIENT_ID] !== envRegion) {
             const defaultClient = REGION_DEFAULT_CLIENT[envRegion];
             if (defaultClient) {
               CLIENT_ID = defaultClient;
+              // Update dropdown
+              const options = Array.from(el.clientIdSelect.options);
+              for (let i = 0; i < options.length; i++) {
+                if (options[i].value === defaultClient) {
+                  options[i].selected = true;
+                  break;
+                }
+              }
             }
           }
           
@@ -874,15 +1059,21 @@
 
       if (error) {
         logMessage('ERROR', 'Authentication failed', `${error}: ${errorDescription}`);
-        showStatusMessage(`❌ Authentication failed`, 'error');
-        setTimeout(() => authenticate(), 2000);
+        showStatusMessage(`❌ Authentication failed: ${error}`, 'error');
+        if (el.authDebugInfo) {
+          el.authDebugInfo.innerHTML = `❌ Auth failed: ${error} - ${errorDescription}`;
+          el.btnForceAuth.style.display = 'block';
+        }
         return;
       }
 
       const hasValidToken = loadStoredCredentials();
       if (hasValidToken) {
         const envName = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.name || 'Genesys Cloud';
-        logMessage('INFO', 'Auto-authentication successful', 'Using stored credentials');
+        logMessage('SUCCESS', 'Auto-authentication successful', 'Using stored credentials');
+        if (el.authDebugInfo) {
+          el.authDebugInfo.innerHTML = '✅ Using stored credentials';
+        }
         setTimeout(() => showMainApp(envName), 500);
         return;
       }
@@ -891,33 +1082,64 @@
       if (refreshSuccess) {
         const envName = ENVIRONMENTS[CURRENT_CONFIG.environmentRegion]?.name || 'Genesys Cloud';
         logMessage('SUCCESS', 'Token refreshed', 'Auto-authentication successful');
+        if (el.authDebugInfo) {
+          el.authDebugInfo.innerHTML = '✅ Token refreshed';
+        }
         setTimeout(() => showMainApp(envName), 500);
         return;
       }
 
       logMessage('INFO', 'No valid credentials found', 'Redirecting to authentication...');
+      if (el.authDebugInfo) {
+        el.authDebugInfo.innerHTML = '⏳ No valid credentials, redirecting to login...';
+      }
       setTimeout(() => authenticate(), 1500);
     }
 
     function authenticate() {
       const envRegion = el.regionSelect.value;
       const env = ENVIRONMENTS[envRegion];
-      if (!env) return;
+      
+      if (!env) {
+        logMessage('ERROR', 'Invalid environment selected');
+        return;
+      }
+      
+      // Save the selected region and client before redirect
+      localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, envRegion);
+      localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
       
       const authUrlValue = authUrl(envRegion);
       if (authUrlValue) {
-        logMessage('INFO', 'Authenticating', `Region: ${env.name}`);
+        logMessage('INFO', 'Redirecting to authentication', `Region: ${env.name}, Client: ${CLIENT_ID.substring(0,8)}`);
         window.location.href = authUrlValue;
+      } else {
+        logMessage('ERROR', 'Could not generate authentication URL');
       }
     }
 
     function checkTokenExpiry() {
-      if (!CURRENT_CONFIG.token || !CURRENT_CONFIG.tokenExpiry) return false;
-      if (Date.now() > CURRENT_CONFIG.tokenExpiry - (5 * 60 * 1000)) {
-        logMessage('WARN', 'Token expired or about to expire');
+      if (!CURRENT_CONFIG.token || !CURRENT_CONFIG.tokenExpiry) {
+        logMessage('DEBUG', 'No token to check expiry');
         return false;
       }
-      return true;
+      
+      const now = Date.now();
+      const expiresIn = CURRENT_CONFIG.tokenExpiry - now;
+      const expiresInMinutes = Math.floor(expiresIn / 1000 / 60);
+      
+      logMessage('DEBUG', 'Token expiry check', `Expires in ${expiresInMinutes} minutes`);
+      
+      if (expiresIn < 0) {
+        logMessage('WARN', 'Token expired');
+        return false;
+      }
+      
+      if (expiresIn < (5 * 60 * 1000)) {
+        logMessage('WARN', `Token expires in ${expiresInMinutes} minutes`);
+      }
+      
+      return expiresIn > 0;
     }
 
     function showMainApp(environmentName) {
@@ -930,11 +1152,12 @@
         el.regionSelect.value = CURRENT_CONFIG.environmentRegion;
       }
       
+      updateTokenDisplay();
       initializeApp();
     }
 
     function disconnect() {
-      if (confirm('Disconnect from Genesys Cloud?')) {
+      if (confirm('Disconnect from Genesys Cloud? This will clear all stored credentials.')) {
         clearCredentials();
         appState.userData = [];
         appState.rolesCache.clear();
@@ -942,25 +1165,53 @@
         el.authContainer.style.display = 'block';
         updateConnectionStatus(false, 'Not Connected');
         logMessage('INFO', 'Disconnected from Genesys Cloud');
-        setTimeout(() => initAuth(), 500);
+        if (el.authDebugInfo) {
+          el.authDebugInfo.innerHTML = 'Disconnected. Ready to authenticate...';
+        }
+      }
+    }
+
+    function reauthenticate() {
+      if (confirm('Re-authenticate? This will clear your current session.')) {
+        clearCredentials();
+        appState.userData = [];
+        appState.rolesCache.clear();
+        el.mainContent.style.display = 'none';
+        el.authContainer.style.display = 'block';
+        updateConnectionStatus(false, 'Not Connected');
+        if (el.authDebugInfo) {
+          el.authDebugInfo.innerHTML = 'Re-authenticating...';
+        }
+        setTimeout(() => authenticate(), 500);
       }
     }
 
     function switchRegion() {
       const selectedRegion = el.regionSelect.value;
+      const previousRegion = CURRENT_CONFIG.environmentRegion;
       
-      if (selectedRegion === CURRENT_CONFIG.environmentRegion) {
+      if (selectedRegion === previousRegion) {
         showStatusMessage('Already using this region', 'info');
         return;
       }
       
-      if (confirm('Switch region? This will disconnect your current session.')) {
+      if (confirm('Switch region? This will disconnect your current session and require a new login.')) {
         localStorage.setItem(STORAGE_KEYS.SELECTED_REGION, selectedRegion);
         
+        // Set default client for the new region
         const defaultClient = REGION_DEFAULT_CLIENT[selectedRegion];
         if (defaultClient) {
           CLIENT_ID = defaultClient;
           localStorage.setItem(STORAGE_KEYS.CLIENT_ID, CLIENT_ID);
+          
+          // Update dropdown
+          const options = Array.from(el.clientIdSelect.options);
+          for (let i = 0; i < options.length; i++) {
+            if (options[i].value === defaultClient) {
+              options[i].selected = true;
+              break;
+            }
+          }
         }
         
         clearCredentials();
@@ -974,6 +1225,9 @@
         logMessage('INFO', 'Switched region', `Now using ${ENVIRONMENTS[selectedRegion]?.name}`);
         showStatusMessage(`🔄 Switched to ${ENVIRONMENTS[selectedRegion]?.name}`, 'info');
         setTimeout(() => authenticate(), 300);
+      } else {
+        // Revert dropdown if user cancels
+        el.regionSelect.value = previousRegion || 'eu-west-1';
       }
     }
 
@@ -995,36 +1249,72 @@
 
     // ==================== API FUNCTIONS ====================
     async function apiCall(path, options = {}) {
-      if (!checkTokenExpiry()) {
-        const refreshSuccess = await attemptTokenRefresh();
-        if (!refreshSuccess) throw new Error('Authentication token expired. Please reconnect.');
+      if (!CURRENT_CONFIG.token) {
+        throw new Error('Not authenticated - no token found');
       }
-      if (!CURRENT_CONFIG.token) throw new Error('Not authenticated');
+      
+      if (!checkTokenExpiry()) {
+        logMessage('WARN', 'Token expired, attempting refresh');
+        const refreshSuccess = await attemptTokenRefresh();
+        if (!refreshSuccess) {
+          throw new Error('Authentication token expired and refresh failed. Please reconnect.');
+        }
+      }
       
       const url = `${CURRENT_CONFIG.environment}${path}`;
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Authorization': `Bearer ${CURRENT_CONFIG.token}`,
-          'Content-Type': 'application/json',
-          ...options.headers
-        }
-      });
+      logMessage('DEBUG', 'API Call', `${options.method || 'GET'} ${path}`);
+      
+      try {
+        const response = await fetch(url, {
+          ...options,
+          headers: {
+            'Authorization': `Bearer ${CURRENT_CONFIG.token}`,
+            'Content-Type': 'application/json',
+            ...options.headers
+          }
+        });
 
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`Authentication error (${response.status}). Please reconnect.`);
+        if (response.status === 401 || response.status === 403) {
+          logMessage('ERROR', `Authentication error ${response.status}`, `Path: ${path}`);
+          
+          // Try to refresh once more
+          const refreshSuccess = await attemptTokenRefresh();
+          if (refreshSuccess) {
+            logMessage('INFO', 'Token refreshed, retrying API call');
+            // Retry with new token
+            const retryResponse = await fetch(url, {
+              ...options,
+              headers: {
+                'Authorization': `Bearer ${CURRENT_CONFIG.token}`,
+                'Content-Type': 'application/json',
+                ...options.headers
+              }
+            });
+            if (retryResponse.ok) {
+              return retryResponse.json();
+            }
+          }
+          
+          throw new Error(`Authentication error (${response.status}). Please reconnect.`);
+        }
+        
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After') || 5;
+          logMessage('WARN', `Rate limit exceeded`, `Retrying after ${retryAfter} seconds`);
+          await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
+          return apiCall(path, options);
+        }
+        
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        }
+        
+        return response.json();
+      } catch (error) {
+        logMessage('ERROR', 'API call failed', `${path}: ${error.message}`);
+        throw error;
       }
-      if (response.status === 429) {
-        const retryAfter = response.headers.get('Retry-After') || 5;
-        logMessage('WARN', `Rate limit exceeded`, `Retrying after ${retryAfter} seconds`);
-        await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
-        return apiCall(path, options);
-      }
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        throw new Error(`API Error: ${response.status} ${response.statusText}`);
-      }
-      return response.json();
     }
 
     function detectUserRole(roles) {
@@ -1060,12 +1350,16 @@
 
     function logMessage(level, message, details = '') {
       const timestamp = new Date().toLocaleTimeString();
-      const logEntry = { timestamp, level, message, details };
+      const logEntry = { timestamp, level, message, details: typeof details === 'object' ? JSON.stringify(details) : details };
       appState.logs.unshift(logEntry);
       
       const row = document.createElement('tr');
-      const levelIcon = level === 'ERROR' ? '🔴' : level === 'WARN' ? '🟡' : level === 'SUCCESS' ? '✅' : '🔵';
-      row.innerHTML = `<td>${timestamp}</td><td>${levelIcon} ${level}</td><td>${message}</td><td>${details}</td>`;
+      const levelIcon = level === 'ERROR' ? '🔴' : level === 'WARN' ? '🟡' : level === 'SUCCESS' ? '✅' : level === 'DEBUG' ? '🔍' : '🔵';
+      
+      let detailsDisplay = typeof details === 'object' ? JSON.stringify(details).substring(0, 100) : String(details).substring(0, 100);
+      if (detailsDisplay.length >= 100) detailsDisplay += '...';
+      
+      row.innerHTML = `<td>${timestamp}</td><td>${levelIcon} ${level}</td><td>${message}</td><td>${detailsDisplay}</td>`;
       
       if (el.logsTableBody.children[0]?.innerHTML.includes('System initialised')) {
         el.logsTableBody.innerHTML = '';
@@ -1103,6 +1397,11 @@
     }
 
     async function fetchUserData() {
+      if (!appState.isConnected) {
+        showStatusMessage('Please connect first', 'warn');
+        return;
+      }
+
       setLoading(true, 'Loading Users', 'Fetching user list from Genesys Cloud...');
       updateLoadingProgress(10);
 
@@ -1111,9 +1410,12 @@
         let page = 1;
         const pageSize = 100;
 
+        logMessage('INFO', 'Starting user fetch', `Region: ${CURRENT_CONFIG.environmentRegion}`);
+
         while (true) {
           updateLoadingProgress(10 + (page * 5));
           
+          logMessage('DEBUG', `Fetching page ${page}`);
           const usersData = await apiCall(`/api/v2/users?pageSize=${pageSize}&pageNumber=${page}&expand=dateLastLogin,authorization,groups`);
           const users = usersData?.entities || [];
           allUsers = allUsers.concat(users);
@@ -1126,7 +1428,7 @@
         }
 
         updateLoadingProgress(70);
-        logMessage('SUCCESS', `Loaded ${allUsers.length} users`);
+        logMessage('SUCCESS', `Loaded ${allUsers.length} users total`);
 
         appState.userData = allUsers.map(user => {
           const teamName = user.groups && user.groups.length > 0 
@@ -1170,6 +1472,13 @@
         setLoading(false);
         logMessage('ERROR', 'Failed to fetch users', error.message);
         showStatusMessage('❌ Failed to fetch user data', 'error');
+        
+        // If it's an auth error, show reconnect option
+        if (error.message.includes('Authentication') || error.message.includes('401')) {
+          if (confirm('Authentication failed. Would you like to reconnect?')) {
+            reauthenticate();
+          }
+        }
       }
     }
 
@@ -1224,9 +1533,9 @@
         : 0;
       
       el.totalRolesSummary.innerHTML = `
-        <span class="tooltip" title="Users who have ever logged in">📊 ${usersWithLogin} users with login (${pctWithLogin}%)</span><br>
-        <span class="tooltip" title="Total roles assigned across all users">🔑 ${totalRoles} total role assignments</span><br>
-        <span class="tooltip" title="Users with multiple roles">👥 ${multiRoleCount} users have 2+ roles</span>
+        <span title="Users who have ever logged in">📊 ${usersWithLogin} users with login (${pctWithLogin}%)</span><br>
+        <span title="Total roles assigned across all users">🔑 ${totalRoles} total role assignments</span><br>
+        <span title="Users with multiple roles">👥 ${multiRoleCount} users have 2+ roles</span>
       `;
     }
 
@@ -1270,7 +1579,7 @@
         return;
       }
 
-      usersToDisplay.forEach(user => {
+      usersToDisplay.slice(0, 500).forEach(user => { // Limit to 500 rows for performance
         const row = document.createElement('tr');
         
         let roleTypeBadge = '';
@@ -1301,7 +1610,7 @@
           <td style="font-size:13px;">${user.team}</td>
           <td>${roleTypeBadge}</td>
           <td>
-            <span class="tooltip" title="${user.roles ? user.roles.join('\n') : 'No roles'}">
+            <span title="${user.roles ? user.roles.join('\n') : 'No roles'}">
               ${rolesDisplay}
             </span>
           </td>
@@ -1310,6 +1619,14 @@
         `;
         tbody.appendChild(row);
       });
+      
+      if (usersToDisplay.length > 500) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="7" style="text-align:center;padding:12px;background:var(--filter-bg);">
+          Showing first 500 of ${usersToDisplay.length} users. Refine search to see more.
+        </td>`;
+        tbody.appendChild(row);
+      }
     }
 
     function renderRolesTable() {
@@ -1327,7 +1644,7 @@
       const sortedRoles = Array.from(appState.rolesCache.entries())
         .sort((a, b) => b[1] - a[1]);
 
-      sortedRoles.forEach(([roleName, count]) => {
+      sortedRoles.slice(0, 200).forEach(([roleName, count]) => {
         const percentage = ((count / totalUsers) * 100).toFixed(1);
         const row = document.createElement('tr');
         
@@ -1346,6 +1663,14 @@
         `;
         tbody.appendChild(row);
       });
+
+      if (sortedRoles.length > 200) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td colspan="4" style="text-align:center;padding:8px;background:var(--filter-bg);">
+          Showing first 200 of ${sortedRoles.length} roles
+        </td>`;
+        tbody.appendChild(row);
+      }
 
       // Add summary row
       const summaryRow = document.createElement('tr');
@@ -1394,7 +1719,7 @@
     }
 
     function resetApplication() {
-      if (confirm('Reset the application? This will clear all user data.')) {
+      if (confirm('Reset the application? This will clear all user data but keep the connection.')) {
         appState.userData = [];
         appState.rolesCache.clear();
         
@@ -1409,7 +1734,7 @@
         el.statMultiRole.textContent = '0';
         el.totalCount.textContent = '0';
         el.visibleCount.textContent = '0';
-        el.totalRolesSummary.innerHTML = 'Loading user data...';
+        el.totalRolesSummary.innerHTML = 'No data loaded';
         el.btnExportUsers.disabled = true;
         
         el.usersTableBody.innerHTML = `
@@ -1428,16 +1753,24 @@
     }
 
     function initializeApp() {
+      logMessage('INFO', 'User Manager initialised', `Region: ${el.regionSelect.value}, Client: ${CLIENT_ID.substring(0,8)}`);
+      
       // Set up event listeners
       el.btnDisconnect.addEventListener('click', disconnect);
+      el.btnReauth.addEventListener('click', reauthenticate);
       el.btnSwitchRegion.addEventListener('click', switchRegion);
       el.btnFetchUsers.addEventListener('click', fetchUserData);
       el.btnExportUsers.addEventListener('click', exportUsers);
       el.btnReset.addEventListener('click', resetApplication);
+      el.btnForceAuth.addEventListener('click', () => {
+        el.btnForceAuth.style.display = 'none';
+        authenticate();
+      });
 
       el.userSearch.addEventListener('input', renderUserTable);
       el.userFilter.addEventListener('change', renderUserTable);
 
+      // Tab switching
       document.querySelectorAll('.tab').forEach(tab => {
         tab.addEventListener('click', function() {
           const tabId = this.dataset.tab;
@@ -1453,6 +1786,7 @@
         });
       });
 
+      // Log management
       el.btnClearLogs.addEventListener('click', () => {
         el.logsTableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px;">Logs cleared</td></tr>';
         appState.logs = [];
@@ -1467,23 +1801,41 @@
         );
       });
 
-      // Check region-client compatibility
-      function checkClientRegionMatch() {
+      // Client ID change handler
+      el.clientIdSelect.addEventListener('change', () => {
+        const newClientId = el.clientIdSelect.value;
+        if (newClientId !== CLIENT_ID) {
+          CLIENT_ID = newClientId;
+          logMessage('INFO', 'Client ID changed', CLIENT_ID.substring(0,8));
+          
+          // Check region compatibility
+          const clientRegion = CLIENT_REGION_MAP[CLIENT_ID];
+          const selectedRegion = el.regionSelect.value;
+          
+          if (clientRegion && clientRegion !== selectedRegion) {
+            el.regionWarning.classList.add('active');
+            el.regionWarning.innerHTML = `⚠️ Warning: This client ID was created for ${ENVIRONMENTS[clientRegion]?.name} but you have ${ENVIRONMENTS[selectedRegion]?.name} selected.`;
+          } else {
+            el.regionWarning.classList.remove('active');
+          }
+        }
+      });
+
+      // Initial region check
+      const checkClientRegionMatch = () => {
         const selectedRegion = el.regionSelect.value;
         const clientRegion = CLIENT_REGION_MAP[CLIENT_ID];
         
         if (clientRegion && clientRegion !== selectedRegion) {
           el.regionWarning.classList.add('active');
-          el.regionWarning.innerHTML = `⚠️ Warning: This client ID may not work in ${ENVIRONMENTS[selectedRegion]?.name}.`;
+          el.regionWarning.innerHTML = `⚠️ Warning: This client ID was created for ${ENVIRONMENTS[clientRegion]?.name} but you have ${ENVIRONMENTS[selectedRegion]?.name} selected.`;
         } else {
           el.regionWarning.classList.remove('active');
         }
-      }
+      };
 
       el.regionSelect.addEventListener('change', checkClientRegionMatch);
       checkClientRegionMatch();
-
-      logMessage('INFO', 'User Manager initialised', `Region: ${el.regionSelect.value}`);
     }
 
     // Start the application
